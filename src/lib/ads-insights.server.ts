@@ -26,13 +26,13 @@ export async function metaAdsSummary(
   const accounts = await proxyRequest<AdAccounts>(config, {
     workspaceId,
     accountId,
-    url: "https://graph.facebook.com/v21.0/me/adaccounts?fields=id,name,currency&limit=5",
+    url: "https://graph.facebook.com/v23.0/me/adaccounts?fields=id,name,currency&limit=5",
   });
   const act = accounts.data?.[0];
   if (!act) return "لا حساب إعلاني مرتبط.";
 
   const url =
-    `https://graph.facebook.com/v21.0/${act.id}/insights?` +
+    `https://graph.facebook.com/v23.0/${act.id}/insights?` +
     new URLSearchParams({
       level: "campaign",
       date_preset: "last_30d",

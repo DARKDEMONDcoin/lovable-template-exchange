@@ -7,7 +7,7 @@
  */
 import { proxyRequest, type PipedreamConfig } from "./pipedream.server";
 
-const GRAPH = "https://graph.facebook.com/v21.0";
+const GRAPH = "https://graph.facebook.com/v23.0";
 
 export type PageTarget = { id: string; name: string; token: string; igId?: string };
 

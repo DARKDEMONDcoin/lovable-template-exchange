@@ -376,15 +376,15 @@ async function readMetaPerformance(admin: Admin, workspaceId: string, provider: 
   const accounts = await proxyRequest<MetaAccounts>(config, {
     workspaceId,
     accountId: acc.account_id,
-    url: "https://graph.facebook.com/v21.0/me/accounts?fields=id,name,instagram_business_account&limit=5",
+    url: "https://graph.facebook.com/v23.0/me/accounts?fields=id,name,instagram_business_account&limit=5",
   });
   const page = accounts.data?.[0];
   const target = provider === "instagram" ? page?.instagram_business_account?.id : page?.id;
   if (!target) return [];
   const url =
     provider === "instagram"
-      ? `https://graph.facebook.com/v21.0/${target}/media?fields=id,caption,timestamp,permalink,like_count,comments_count&limit=25`
-      : `https://graph.facebook.com/v21.0/${target}/posts?fields=id,message,created_time,permalink_url,likes.summary(true),comments.summary(true)&limit=25`;
+      ? `https://graph.facebook.com/v23.0/${target}/media?fields=id,caption,timestamp,permalink,like_count,comments_count&limit=25`
+      : `https://graph.facebook.com/v23.0/${target}/posts?fields=id,message,created_time,permalink_url,likes.summary(true),comments.summary(true)&limit=25`;
   const posts = await proxyRequest<MetaPosts & { data?: { likes?: { summary?: { total_count?: number } }; comments?: { summary?: { total_count?: number } } }[] }>(config, {
     workspaceId,
     accountId: acc.account_id,
