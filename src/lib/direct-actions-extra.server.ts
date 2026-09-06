@@ -21,7 +21,7 @@ import {
 import { pageTarget, type PageTarget } from "./social-inbox.server";
 import { whatsappPhoneId } from "./messaging-extra.server";
 
-const GRAPH = "https://graph.facebook.com/v21.0";
+const GRAPH = "https://graph.facebook.com/v23.0";
 const NOTION = { "notion-version": "2022-06-28" };
 const LI = { "linkedin-version": "202401", "x-restli-protocol-version": "2.0.0" };
 
