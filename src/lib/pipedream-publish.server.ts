@@ -26,58 +26,93 @@ export type PublishResult = {
 };
 
 /**
- * معرّف الحساب المربوط: من قاعدتنا أولاً، وإن لم يوجد نسأل Pipedream مباشرة
- * (الربط قد يكون تم للتو أو لم تُشغَّل المزامنة) ونحفظ النتيجة — فلا يفشل النشر
- * بحجة «غير مربوط» بينما الحساب مربوط فعلاً لدى الوسيط.
+ * كل الحسابات المرشحة للنشر لهذا المزوّد: المحفوظة لدينا أولاً ثم الحية لدى الوسيط.
+ * نعيد قائمة (لا حساباً واحداً) لأن مساحة العمل قد تحتوي أكثر من ربط للمنصة نفسها،
+ * وبعضها قديم بصلاحيات ناقصة — فنختار لاحقاً الربط الذي يسمح بالنشر فعلاً.
  */
-async function resolveAccountId(
+async function resolveAccountCandidates(
   admin: Admin,
   config: PipedreamConfig,
   workspaceId: string,
   provider: string,
   appSlug?: string,
-): Promise<string | null> {
+): Promise<string[]> {
+  const ids: string[] = [];
   const { data: stored } = await admin
     .from("pipedream_accounts")
-    .select("account_id")
+    .select("account_id, status")
     .eq("workspace_id", workspaceId)
     .eq("provider", provider)
-    .eq("status", "connected")
-    .order("connected_at", { ascending: false })
-    .limit(1);
-  if (stored?.[0]?.account_id) return stored[0].account_id;
-  if (!appSlug) return null;
+    .order("connected_at", { ascending: false });
+  for (const row of stored ?? []) {
+    if (row.status === "connected" && row.account_id) ids.push(row.account_id);
+  }
+  if (!appSlug) return ids;
 
   let live: Awaited<ReturnType<typeof listAccounts>> = [];
   try {
     live = await listAccounts(config, workspaceId, appSlug);
   } catch (error) {
     console.error("[publish] live account lookup failed", error);
-    return null;
+    return ids;
   }
-  const account = live.find((a) => accountUsable(a)) ?? live[0];
-  if (!account) return null;
+  const usable = live.filter((a) => accountUsable(a));
+  for (const account of usable.length ? usable : live) {
+    if (!ids.includes(account.id)) ids.push(account.id);
+    const { error: saveError } = await admin.from("pipedream_accounts").upsert(
+      {
+        workspace_id: workspaceId,
+        provider,
+        app_slug: appSlug,
+        account_id: account.id,
+        account_name: account.name ?? null,
+        status: accountUsable(account) ? "connected" : "error",
+        healthy: accountUsable(account),
+      },
+      { onConflict: "workspace_id,provider,account_id" },
+    );
+    if (saveError) console.error("[publish] failed to persist account", saveError);
+  }
+  const first = usable[0] ?? live[0];
+  if (first) {
+    await admin
+      .from("integrations")
+      .update({ status: "connected", account: first.name ?? appSlug })
+      .eq("workspace_id", workspaceId)
+      .eq("provider", provider);
+  }
+  return ids;
+}
 
-  const { error: saveError } = await admin.from("pipedream_accounts").upsert(
-    {
-      workspace_id: workspaceId,
-      provider,
-      app_slug: appSlug,
-      account_id: account.id,
-      account_name: account.name ?? null,
-      status: accountUsable(account) ? "connected" : "error",
-      healthy: accountUsable(account),
-    },
-    { onConflict: "workspace_id,provider,account_id" },
-  );
-  if (saveError) throw new Error(`تعذّر حفظ الحساب المربوط: ${saveError.message}`);
-  await admin
-    .from("integrations")
-    .update({ status: "connected", account: account.name ?? appSlug })
-    .eq("workspace_id", workspaceId)
-    .eq("provider", provider);
-
-  return account.id;
+/**
+ * يختار من المرشحين الربط الذي يملك صلاحيات النشر فعلاً على ميتا،
+ * ويعلّم الروابط الناقصة بأنها بحاجة إعادة ربط حتى لا تُختار مرة أخرى.
+ */
+async function pickMetaAccount(
+  admin: Admin,
+  config: PipedreamConfig,
+  workspaceId: string,
+  provider: "facebook" | "instagram",
+  candidates: string[],
+): Promise<string> {
+  let lastError: unknown = null;
+  for (const id of candidates) {
+    try {
+      await assertMetaPublishScopes(config, workspaceId, id, provider);
+      return id;
+    } catch (error) {
+      lastError = error;
+      await admin
+        .from("pipedream_accounts")
+        .update({ status: "error", healthy: false })
+        .eq("workspace_id", workspaceId)
+        .eq("provider", provider)
+        .eq("account_id", id);
+    }
+  }
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("لا يوجد ربط بصلاحيات النشر على ميتا — أعد الربط من صفحة التكاملات.");
 }
 
 export async function publishToPlatform(
@@ -99,16 +134,26 @@ export async function publishToPlatform(
   const config = await pipedreamConfig();
   if (!config) throw missingConfigError();
 
-  const accountId = await resolveAccountId(
+  const candidates = await resolveAccountCandidates(
     admin,
     config,
     params.workspaceId,
     params.provider,
     app?.slug,
   );
-  if (!accountId)
+  if (!candidates.length)
     throw new Error(`${app?.label ?? params.provider} غير مربوط بعد — اربطه من صفحة التكاملات.`);
+  const accountId = metaProxy
+    ? await pickMetaAccount(
+        admin,
+        config,
+        params.workspaceId,
+        params.provider as "facebook" | "instagram",
+        candidates,
+      )
+    : candidates[0]!;
   const account = { account_id: accountId };
+
 
   // ميتا (إنستجرام/فيسبوك): ننشر عبر Graph API مباشرة من خلال وكيل Pipedream،
   // لأن الإجراءات الجاهزة لا تدعم النص الكامل مع الصورة على إنستجرام.
