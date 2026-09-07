@@ -27,7 +27,7 @@ export type QueueReport = {
 function remoteRef(result: unknown): string | null {
   if (!result || typeof result !== "object") return null;
   const obj = result as Record<string, unknown>;
-  for (const key of ["id", "post_id", "post_ids", "urn", "share_id"]) {
+  for (const key of ["postId", "id", "post_id", "post_ids", "urn", "share_id", "permalink"]) {
     const value = obj[key];
     if (typeof value === "string" && value) return value.slice(0, 200);
   }
