@@ -259,31 +259,46 @@ export function PublishPanel({ workspaceId, employeeId, taskId, channel, request
 
   return (
     <div className="mt-4 rounded-2xl border border-border bg-secondary/30 p-4">
-      {/* المنصات */}
+      {/* المنصات: كل منصات النشر المدعومة كخيارات — والمطلوب صراحةً مُبرَز */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-bold text-muted-foreground">انشر على</span>
-        {connected.map((p) => (
-          <button key={p} type="button" onClick={() => toggle(p)} aria-pressed={active.includes(p)} className={chipClass(active.includes(p))}>
-            <AppIcon name={p} className="size-3.5" />
-            {appLabel(p)}
-          </button>
-        ))}
-        {missing.map((p) => (
-          <ConnectNow
-            key={p}
-            workspaceId={workspaceId}
-            provider={p}
-            size="sm"
-            label={`${providerLabel(p)} · اربطه`}
-            className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-amber/60 bg-amber/10 px-3 py-1.5 text-xs font-bold text-ink-soft hover:bg-amber/20"
-          />
-        ))}
+        {(PUBLISHABLE as readonly string[]).map((p) =>
+          connected.includes(p as never) ? (
+            <button
+              key={p}
+              type="button"
+              onClick={() => toggle(p)}
+              aria-pressed={active.includes(p)}
+              className={chipClass(active.includes(p))}
+            >
+              <AppIcon name={p} className="size-3.5" />
+              {appLabel(p)}
+              {requested.includes(p as never) ? (
+                <span className="rounded-full bg-primary/20 px-1.5 text-[10px] text-primary">طلبته</span>
+              ) : null}
+            </button>
+          ) : (
+            <ConnectNow
+              key={p}
+              workspaceId={workspaceId}
+              provider={p}
+              size="sm"
+              label={`${providerLabel(p)} · اربطه`}
+              className={`inline-flex items-center gap-1.5 rounded-full border border-dashed px-3 py-1.5 text-xs font-bold hover:bg-secondary ${
+                requested.includes(p as never)
+                  ? "border-amber/60 bg-amber/10 text-ink-soft"
+                  : "border-border text-muted-foreground"
+              }`}
+            />
+          ),
+        )}
       </div>
       {missing.length && !active.length ? (
         <p className="mt-2 text-xs font-bold text-coral">
           طلبت النشر على {missing.map(providerLabel).join(" و")} وهو غير مربوط بعد — لن نبدّله بمنصة أخرى دون إذنك. اربطه أو اختر منصة أخرى يدوياً.
         </p>
       ) : null}
+
 
       {/* النص */}
       <div className="mt-4">
