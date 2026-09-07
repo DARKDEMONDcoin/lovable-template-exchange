@@ -53,6 +53,7 @@ import { Route as ApiPublicSocialAutopilotRouteImport } from './routes/api/publi
 import { Route as ApiPublicSocialQueueRouteImport } from './routes/api/public/social-queue'
 import { Route as AppChatIndexRouteImport } from './routes/app.chat.index'
 import { Route as AppChatIdRouteImport } from './routes/app.chat.$id'
+import { Route as ApiPublicMetaCallbackRouteImport } from './routes/api/public/meta.callback'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -278,6 +279,11 @@ const AppChatIdRoute = AppChatIdRouteImport.update({
   path: '/chat/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPublicMetaCallbackRoute = ApiPublicMetaCallbackRouteImport.update({
+  id: '/api/public/meta/callback',
+  path: '/api/public/meta/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -324,6 +330,7 @@ export interface FileRoutesByFullPath {
   '/api/public/social-queue': typeof ApiPublicSocialQueueRoute
   '/app/chat/$id': typeof AppChatIdRoute
   '/app/chat/': typeof AppChatIndexRoute
+  '/api/public/meta/callback': typeof ApiPublicMetaCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -369,6 +376,7 @@ export interface FileRoutesByTo {
   '/api/public/social-queue': typeof ApiPublicSocialQueueRoute
   '/app/chat/$id': typeof AppChatIdRoute
   '/app/chat': typeof AppChatIndexRoute
+  '/api/public/meta/callback': typeof ApiPublicMetaCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -416,6 +424,7 @@ export interface FileRoutesById {
   '/api/public/social-queue': typeof ApiPublicSocialQueueRoute
   '/app/chat/$id': typeof AppChatIdRoute
   '/app/chat/': typeof AppChatIndexRoute
+  '/api/public/meta/callback': typeof ApiPublicMetaCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -464,6 +473,7 @@ export interface FileRouteTypes {
     | '/api/public/social-queue'
     | '/app/chat/$id'
     | '/app/chat/'
+    | '/api/public/meta/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -509,6 +519,7 @@ export interface FileRouteTypes {
     | '/api/public/social-queue'
     | '/app/chat/$id'
     | '/app/chat'
+    | '/api/public/meta/callback'
   id:
     | '__root__'
     | '/'
@@ -555,6 +566,7 @@ export interface FileRouteTypes {
     | '/api/public/social-queue'
     | '/app/chat/$id'
     | '/app/chat/'
+    | '/api/public/meta/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -587,6 +599,7 @@ export interface RootRouteChildren {
   ApiPublicPipedreamWebhookRoute: typeof ApiPublicPipedreamWebhookRoute
   ApiPublicSocialAutopilotRoute: typeof ApiPublicSocialAutopilotRoute
   ApiPublicSocialQueueRoute: typeof ApiPublicSocialQueueRoute
+  ApiPublicMetaCallbackRoute: typeof ApiPublicMetaCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -899,6 +912,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChatIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/public/meta/callback': {
+      id: '/api/public/meta/callback'
+      path: '/api/public/meta/callback'
+      fullPath: '/api/public/meta/callback'
+      preLoaderRoute: typeof ApiPublicMetaCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -970,6 +990,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPipedreamWebhookRoute: ApiPublicPipedreamWebhookRoute,
   ApiPublicSocialAutopilotRoute: ApiPublicSocialAutopilotRoute,
   ApiPublicSocialQueueRoute: ApiPublicSocialQueueRoute,
+  ApiPublicMetaCallbackRoute: ApiPublicMetaCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

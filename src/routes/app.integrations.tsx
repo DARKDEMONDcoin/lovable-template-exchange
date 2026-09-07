@@ -13,6 +13,7 @@ import { Ga4Properties } from "@/components/app/Ga4Properties";
 import { ShopifyConnect } from "@/components/app/ShopifyConnect";
 import { WebflowConnect } from "@/components/app/WebflowConnect";
 import { GhostConnect } from "@/components/app/GhostConnect";
+import { MetaDirect } from "@/components/app/MetaDirect";
 import { team } from "@/data/team";
 import { integrationStatusLabel } from "@/data/app";
 import { isPipedreamProvider, pipedreamApp } from "@/data/pipedream-apps";
@@ -288,6 +289,8 @@ function IntegrationsPage() {
         <GhostConnect workspaceId={workspace.id} onClose={() => setGhostOpen(false)} />
       ) : null}
 
+
+      <MetaDirect workspaceId={workspace?.id} />
 
       {error ? (
         <p className="mb-6 rounded-2xl bg-coral/12 px-4 py-3 text-sm font-semibold text-coral">
