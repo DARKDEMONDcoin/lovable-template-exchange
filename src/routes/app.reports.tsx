@@ -116,6 +116,29 @@ function SourceCard({
 function ReportsPage() {
   const { data: workspace } = useWorkspace();
   const build = useServerFn(buildReport);
+  const startGsc = useServerFn(startSearchConsoleOAuth);
+  const [connecting, setConnecting] = useState(false);
+  const [sitesOpen, setSitesOpen] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
+
+  const connectSearchConsole = async (state: string) => {
+    if (!workspace) return;
+    setConnectError(null);
+    if (state === "not_selected") {
+      setSitesOpen(true);
+      return;
+    }
+    setConnecting(true);
+    try {
+      const res = await startGsc({ data: { workspaceId: workspace.id } });
+      window.open(res.url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      setConnectError(e instanceof Error ? e.message : "تعذّر بدء ربط Search Console.");
+    } finally {
+      setConnecting(false);
+    }
+  };
+
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["report", workspace?.id],
