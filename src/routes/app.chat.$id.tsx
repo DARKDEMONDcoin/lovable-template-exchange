@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Send, Settings2, Loader2, Check, Copy, Sparkles, ArrowUpLeft, Link2, Fingerprint, Share2, RefreshCw, Download, PenLine, Plus, Trash2, ChevronDown } from "lucide-react";
+import { Send, PanelRight, Loader2, Check, Copy, Sparkles, ArrowUpLeft, Link2, Fingerprint, Share2, RefreshCw, Download, PenLine, Plus, Trash2, ChevronDown } from "lucide-react";
 
 import { AppShell } from "@/components/app/AppShell";
 import { AppIcon, appLabel } from "@/components/site/AppIcon";
@@ -481,6 +481,17 @@ function ChatPage() {
       lead={member.role}
       padded={false}
       actions={
+        <>
+        <button
+          type="button"
+          onClick={() => createConversation.mutate(undefined, { onSuccess: (row) => setConversationId(row.id) })}
+          disabled={!workspace || createConversation.isPending}
+          className="grid size-10 place-items-center rounded-xl border border-border transition-colors hover:bg-secondary disabled:opacity-50"
+          aria-label="محادثة جديدة"
+          title="محادثة جديدة"
+        >
+          {createConversation.isPending ? <Loader2 className="size-4.5 animate-spin" /> : <Plus className="size-4.5" />}
+        </button>
         <button
           onClick={() => setShowSettings((v) => !v)}
           className={cn(
