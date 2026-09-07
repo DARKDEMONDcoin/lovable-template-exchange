@@ -3,6 +3,56 @@
  * ملف محايد (يعمل على المتصفح والخادم) حتى تستعمله لوحة النشر والطيار الآلي بنفس المنطق.
  */
 
+/**
+ * أسطر «كلام الموظف» التي لا يجوز أن تُنشر أبداً على المنصة:
+ * إرشادات الأزرار، قسم الافتراضات، معرض صور الموقع، وأي تعليق موجّه للمستخدم.
+ */
+const CUT_FROM = [
+  /^\s*#{0,6}\s*(?:📸|📷)?\s*صور\s+من\s+موقعك/u,
+  /^\s*#{0,6}\s*\**\s*افتراضات\s*[:：]?/u,
+  /^\s*#{0,6}\s*\**\s*(?:ملاحظة للمستخدم|تعليمات)\s*[:：]/u,
+];
+
+const DROP_LINE = [
+  /انشر\s*الآن/u,
+  /«?\s*جدولة\s*»?\s*(?:أسفل|من)/u,
+  /اربط\s+حساب/u,
+  /أسفل\s+المخرج/u,
+  /اعتمده?\s+من\s+(?:صفحة\s+)?(?:الموافقات|الاعتمادات)/u,
+  /اختر\s+أي\s+صورة/u,
+  /الصورة\s+المولّدة/u,
+  /المنشور\s+جاهز/u,
+  /راقب\s+الوصول/u,
+];
+
+/**
+ * ينظّف نص المنشور: يزيل صيغ الماركداون وكل ما هو موجَّه للمستخدم داخل الشات،
+ * ويُبقي نص المنشور نفسه فقط. يُطبَّق في الواجهة وفي الخادم قبل الإرسال للمنصة.
+ */
+export function sanitizePostBody(input: string | null | undefined): string {
+  if (!input) return "";
+  let text = input
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, "$1")
+    .replace(/^\s*(?:---|\*\*\*|___)\s*$/gm, "")
+    .replace(/^#{1,6}\s*/gm, "")
+    .replace(/\*\*/g, "");
+
+  const lines = text.split("\n");
+  const kept: string[] = [];
+  for (const line of lines) {
+    if (CUT_FROM.some((re) => re.test(line))) break;
+    if (line.trim() && DROP_LINE.some((re) => re.test(line))) continue;
+    kept.push(line);
+  }
+  text = kept.join("\n");
+
+  return text
+    .replace(/[ \t]+$/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 /** نسخة مختصرة تناسب حدّ إكس (٢٨٠ حرفاً) وتنتهي عند جملة كاملة مع أهم هاشتاقين. */
 export function shortForX(caption: string): string {
   const tags = (caption.match(/#[\p{L}\p{N}_]+/gu) ?? []).slice(0, 2).join(" ");
