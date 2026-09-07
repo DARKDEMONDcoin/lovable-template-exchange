@@ -439,7 +439,7 @@ export function PublishPanel({ workspaceId, employeeId, taskId, channel, request
 
       {/* المواعيد */}
       <div className="mt-4">
-        <span className="text-xs font-bold text-muted-foreground">مواعيد الجدولة (اختياري — أضف ما تشاء)</span>
+        <span className="text-xs font-bold text-muted-foreground">مواعيد الجدولة (اختياري — أي يوم وأي ساعة تريد)</span>
         <div className="mt-2 space-y-2">
           {slots.map((s, i) => (
             <div key={i} className="flex flex-wrap items-center gap-2">
@@ -450,14 +450,35 @@ export function PublishPanel({ workspaceId, employeeId, taskId, channel, request
                 aria-label={`موعد النشر ${i + 1}`}
                 className="rounded-full border border-border bg-card px-4 py-2 text-sm"
               />
+              <button type="button" onClick={() => shiftDays(i, 1)} className="rounded-full border border-border px-3 py-2 text-xs font-bold hover:bg-secondary">
+                +يوم
+              </button>
+              <button type="button" onClick={() => shiftDays(i, 7)} className="rounded-full border border-border px-3 py-2 text-xs font-bold hover:bg-secondary">
+                +أسبوع
+              </button>
               <button
                 type="button"
-                onClick={() => suggestBestTime(i)}
-                disabled={!active.length}
+                onClick={() => void loadBestTimes()}
+                disabled={!active.length || loadingTimes}
                 className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-2 text-xs font-bold hover:bg-secondary disabled:opacity-60"
               >
-                <Sparkles className="size-3.5" /> أفضل وقت
+                {loadingTimes ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+                أفضل وقت لجمهورك
               </button>
+              {bestTimes?.slots.length ? (
+                <span className="flex flex-wrap gap-1.5">
+                  {bestTimes.slots.map((slot) => (
+                    <button
+                      key={slot.at}
+                      type="button"
+                      onClick={() => applySlot(i, slot.at)}
+                      className="rounded-full border border-jade/40 bg-jade/10 px-3 py-1.5 text-[11px] font-bold text-jade-deep hover:bg-jade/20"
+                    >
+                      {WEEKDAYS[slot.weekday]} {String(slot.hour).padStart(2, "0")}:00
+                    </button>
+                  ))}
+                </span>
+              ) : null}
               {slots.length > 1 ? (
                 <button type="button" onClick={() => setSlots((all) => all.filter((_, j) => j !== i))} aria-label="حذف الموعد" className="rounded-full p-2 text-muted-foreground hover:bg-secondary">
                   <Trash2 className="size-4" />
