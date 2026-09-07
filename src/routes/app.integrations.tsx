@@ -142,8 +142,13 @@ function IntegrationsPage() {
   }, [pendingSync, workspace, qc, syncAccounts, backTo]);
 
   const all = integrations ?? [];
-  const connected = all.filter((i) => i.status === "connected").length;
-  const broken = all.filter((i) => i.status === "error");
+  // تطبيق واحد يظهر مرة واحدة فقط حتى لو استخدمه أكثر من موظف.
+  const unique = all.filter(
+    (i, idx) => all.findIndex((x) => x.provider === i.provider) === idx,
+  );
+  const connected = unique.filter((i) => i.status === "connected").length;
+  const broken = unique.filter((i) => i.status === "error");
+  const detailRow = unique.find((i) => i.provider === detail) ?? null;
 
   const refresh = async () => {
     if (!workspace) return;
