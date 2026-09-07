@@ -763,7 +763,7 @@ function ChatPage() {
                 className="max-h-40 min-h-11 w-full resize-none bg-transparent px-3 py-2.5 outline-none placeholder:text-muted-foreground/80"
               />
               <div className="flex items-start gap-2 px-1 pb-0.5">
-                <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                   <MediaStudio
                     workspaceId={workspace?.id}
                     attachments={attachments}
@@ -776,19 +776,17 @@ function ChatPage() {
                     onAspectChange={setAspect}
                     disabled={busy}
                   />
-                  <div className="mt-2">
-                    <SkillPalette
-                      skills={employeeSkills}
-                      quick={quickSkills}
-                      hideQuick={(messages ?? []).length > 0 || Boolean(pending)}
-                      disabled={!workspace}
-                      pending={busy}
-                      onRun={(skill, values) => {
-                        setError(null);
-                        skillRun.mutate({ skill, values });
-                      }}
-                    />
-                  </div>
+                  <SkillPalette
+                    skills={employeeSkills}
+                    quick={quickSkills}
+                    hideQuick={(messages ?? []).length > 0 || Boolean(pending)}
+                    disabled={!workspace}
+                    pending={busy}
+                    onRun={(skill, values) => {
+                      setError(null);
+                      skillRun.mutate({ skill, values });
+                    }}
+                  />
                 </div>
                 <button
                   type="submit"
