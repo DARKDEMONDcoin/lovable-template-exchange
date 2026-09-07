@@ -175,12 +175,17 @@ export async function generateImageBytes(
         return { bytes: buf, contentType: res.headers.get("content-type") ?? "image/jpeg", url };
       } catch (error) {
         console.error(`[nour] pollinations attempt ${attempt + 1} failed:`, error);
+        // بعد محاولتين فاشلتين نجرّب Gemini فوراً بدل انتظار كل المحاولات.
+        if (attempt === 1) {
+          const early = await geminiImage(withQuality(prompt), opts);
+          if (early) return early;
+        }
         if (attempt < 3) await new Promise((r) => setTimeout(r, 2000 * 2 ** attempt + Math.random() * 900));
       } finally {
         clearTimeout(timer);
       }
     }
-    return geminiImage(prompt);
+    return geminiImage(withQuality(prompt), opts);
   });
 }
 
