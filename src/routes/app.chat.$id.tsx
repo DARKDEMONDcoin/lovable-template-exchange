@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Send, Settings2, Loader2, Check, Copy, Sparkles, ArrowUpLeft, Link2, Fingerprint, Share2, RefreshCw, Download, PenLine, Plus, Trash2 } from "lucide-react";
+import { Send, Settings2, Loader2, Check, Copy, Sparkles, ArrowUpLeft, Link2, Fingerprint, Share2, RefreshCw, Download, PenLine, Plus, Trash2, ChevronDown } from "lucide-react";
 
 import { AppShell } from "@/components/app/AppShell";
 import { AppIcon, appLabel } from "@/components/site/AppIcon";
@@ -375,6 +375,7 @@ function ChatPage() {
   }, [workspace, conversations, createConversation]);
 
   const [showSettings, setShowSettings] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const ask = useServerFn(askEmployee);
@@ -851,61 +852,80 @@ function ChatPage() {
               ))}
             </div>
           </div>
-          <h2 className="font-display font-black">حسابات {member.name}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">حساب واحد لكل منصة داخل مساحة العمل.</p>
-          <ul className="mt-4 space-y-2">
-            {owned.map((i) => (
-              <li
-                key={i.id}
-                className="flex items-center gap-3 rounded-2xl border border-border/70 p-3"
-              >
-                <AppIcon name={i.provider} className="size-5 shrink-0" />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-bold">{appLabel(i.provider)}</span>
-                  <span className="block truncate text-xs text-muted-foreground">
-                    {i.account ?? "لم يُربط بعد"}
-                  </span>
-                </span>
-                <span
-                  className={cn(
-                    "shrink-0 rounded-full px-2.5 py-1 text-[0.7rem] font-bold",
-                    i.status === "connected" && "bg-jade/12 text-jade-deep",
-                    i.status === "error" && "bg-coral/15 text-coral",
-                    i.status === "disconnected" && "bg-secondary text-muted-foreground",
-                  )}
-                >
-                  {integrationStatusLabel[i.status as keyof typeof integrationStatusLabel] ??
-                    i.status}
-                </span>
-              </li>
-            ))}
-          </ul>
-
-          <ActionPanel
-            employeeId={id}
-            workspaceId={workspace?.id}
-            connected={(integrations ?? [])
-              .filter((i) => i.status === "connected")
-              .map((i) => i.provider)}
-          />
-
-          <h2 className="mt-7 font-display font-black">ما يجيده</h2>
-
-          <ul className="mt-3 space-y-2">
-            {member.tasks.slice(0, 4).map((t) => (
-              <li key={t} className="flex gap-2 text-sm text-ink-soft">
-                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-jade" />
-                {t}
-              </li>
-            ))}
-          </ul>
-
-          <Link
-            to="/app/brain"
-            className="mt-7 block rounded-2xl bg-secondary/60 p-4 text-sm font-semibold transition-colors hover:bg-secondary"
+          <button
+            type="button"
+            onClick={() => setInfoOpen((v) => !v)}
+            aria-expanded={infoOpen}
+            className="flex w-full items-center justify-between gap-3 rounded-2xl px-1 py-1 text-start"
           >
-            يقرأ من عقل العلامة — أضف مستندات ليصبح أدق ↖
-          </Link>
+            <span className="font-display font-black">تفاصيل {member.name}</span>
+            <ChevronDown
+              className={cn("size-4 shrink-0 transition-transform", infoOpen && "rotate-180")}
+            />
+          </button>
+
+          {infoOpen ? (
+            <div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                حساب واحد لكل منصة داخل مساحة العمل.
+              </p>
+              <ul className="mt-4 space-y-2">
+                {owned.map((i) => (
+                  <li
+                    key={i.id}
+                    className="flex items-center gap-3 rounded-2xl border border-border/70 p-3"
+                  >
+                    <AppIcon name={i.provider} className="size-5 shrink-0" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-bold">
+                        {appLabel(i.provider)}
+                      </span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {i.account ?? "لم يُربط بعد"}
+                      </span>
+                    </span>
+                    <span
+                      className={cn(
+                        "shrink-0 rounded-full px-2.5 py-1 text-[0.7rem] font-bold",
+                        i.status === "connected" && "bg-jade/12 text-jade-deep",
+                        i.status === "error" && "bg-coral/15 text-coral",
+                        i.status === "disconnected" && "bg-secondary text-muted-foreground",
+                      )}
+                    >
+                      {integrationStatusLabel[i.status as keyof typeof integrationStatusLabel] ??
+                        i.status}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              <ActionPanel
+                employeeId={id}
+                workspaceId={workspace?.id}
+                connected={(integrations ?? [])
+                  .filter((i) => i.status === "connected")
+                  .map((i) => i.provider)}
+              />
+
+              <h2 className="mt-7 font-display font-black">ما يجيده</h2>
+
+              <ul className="mt-3 space-y-2">
+                {member.tasks.slice(0, 4).map((t) => (
+                  <li key={t} className="flex gap-2 text-sm text-ink-soft">
+                    <span className="mt-2 size-1.5 shrink-0 rounded-full bg-jade" />
+                    {t}
+                  </li>
+                ))}
+              </ul>
+
+              <Link
+                to="/app/brain"
+                className="mt-7 block rounded-2xl bg-secondary/60 p-4 text-sm font-semibold transition-colors hover:bg-secondary"
+              >
+                يقرأ من عقل العلامة — أضف مستندات ليصبح أدق ↖
+              </Link>
+            </div>
+          ) : null}
         </aside>
       </div>
     </AppShell>
