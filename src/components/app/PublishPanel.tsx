@@ -21,6 +21,16 @@ import { useConnectedAccounts } from "@/lib/data";
 import { adaptForProvider, bestTimeFor, sanitizePostBody } from "@/lib/post-format";
 import { PUBLISHABLE, requestedPublishTargets, providerLabel } from "@/lib/platforms";
 import { publishSocialNow, scheduleSocialPost, uploadSocialMedia } from "@/lib/social-queue.functions";
+import { bestPostingTimes } from "@/lib/best-time.functions";
+
+type BestTimes = {
+  source: "audience" | "history" | "baseline";
+  samples: number;
+  note: string;
+  slots: { at: string; hour: number; weekday: number; score: number }[];
+};
+
+const WEEKDAYS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
 /** يلتقط أول صورة داخل المخرج (رابط مباشر أو صيغة ماركداون). */
 export function imageFromOutput(text: string | null | undefined): string | null {
@@ -115,6 +125,14 @@ export function PublishPanel({ workspaceId, employeeId, taskId, channel, request
   const [slots, setSlots] = useState<string[]>(() => [localInputValue(new Date(Date.now() + 3_600_000))]);
   const [busy, setBusy] = useState<"now" | "later" | null>(null);
   const [note, setNote] = useState<string | null>(null);
+
+  // لوحة النشر اختيارية تماماً: لا تفتح إلا إذا أراد المستخدم نشر هذا الرد.
+  const [open, setOpen] = useState(false);
+
+  // أفضل وقت حقيقي محسوب من جمهور المستخدم/سجلّه.
+  const askBestTimes = useServerFn(bestPostingTimes);
+  const [bestTimes, setBestTimes] = useState<BestTimes | null>(null);
+  const [loadingTimes, setLoadingTimes] = useState(false);
 
   const done = (message: string) => {
     setNote(message);
