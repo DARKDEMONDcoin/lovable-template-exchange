@@ -91,9 +91,21 @@ export const scheduleSocialPost = createServerFn({ method: "POST" })
       .eq("status", "connected")
       .order("connected_at", { ascending: false })
       .limit(1);
-    if (!account?.length) {
+    // فيسبوك/إنستجرام قد يكونان مربوطين مباشرةً عبر ميتا بدل Pipedream — كلاهما يكفي للجدولة.
+    let connected = Boolean(account?.length);
+    if (!connected && (data.provider === "facebook" || data.provider === "instagram")) {
+      const { data: meta } = await admin
+        .from("meta_connections")
+        .select("id")
+        .eq("workspace_id", data.workspaceId)
+        .eq("status", "connected")
+        .limit(1);
+      connected = Boolean(meta?.length);
+    }
+    if (!connected) {
       throw new Error("هذه المنصة غير مربوطة بعد — اربطها من صفحة التكاملات ثم أعد الجدولة.");
     }
+
 
     const { data: row, error } = await admin
       .from("social_posts")
