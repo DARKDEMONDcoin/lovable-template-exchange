@@ -762,30 +762,34 @@ function ChatPage() {
                 dir="auto"
                 className="max-h-40 min-h-11 w-full resize-none bg-transparent px-3 py-2.5 outline-none placeholder:text-muted-foreground/80"
               />
-              <div className="flex items-center gap-2 px-1 pb-0.5">
-                <MediaStudio
-                  workspaceId={workspace?.id}
-                  attachments={attachments}
-                  onAttachmentsChange={setAttachments}
-                  imageMode={imageMode}
-                  onImageModeChange={setImageMode}
-                  imagePrompt={imagePrompt}
-                  onImagePromptChange={setImagePrompt}
-                  aspect={aspect}
-                  onAspectChange={setAspect}
-                  disabled={busy}
-                />
-                <SkillPalette
-                  skills={employeeSkills}
-                  quick={quickSkills}
-                  hideQuick={(messages ?? []).length > 0 || Boolean(pending)}
-                  disabled={!workspace}
-                  pending={busy}
-                  onRun={(skill, values) => {
-                    setError(null);
-                    skillRun.mutate({ skill, values });
-                  }}
-                />
+              <div className="flex items-start gap-2 px-1 pb-0.5">
+                <div className="min-w-0 flex-1">
+                  <MediaStudio
+                    workspaceId={workspace?.id}
+                    attachments={attachments}
+                    onAttachmentsChange={setAttachments}
+                    imageMode={imageMode}
+                    onImageModeChange={setImageMode}
+                    imagePrompt={imagePrompt}
+                    onImagePromptChange={setImagePrompt}
+                    aspect={aspect}
+                    onAspectChange={setAspect}
+                    disabled={busy}
+                  />
+                  <div className="mt-2">
+                    <SkillPalette
+                      skills={employeeSkills}
+                      quick={quickSkills}
+                      hideQuick={(messages ?? []).length > 0 || Boolean(pending)}
+                      disabled={!workspace}
+                      pending={busy}
+                      onRun={(skill, values) => {
+                        setError(null);
+                        skillRun.mutate({ skill, values });
+                      }}
+                    />
+                  </div>
+                </div>
                 <button
                   type="submit"
                   disabled={busy || !workspace || !draft.trim()}
