@@ -258,9 +258,9 @@ export function MetaDirect({
 
 
 
-      {connections.length ? (
+      {shown.length ? (
         <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-          {connections.map((c) => (
+          {shown.map((c) => (
             <li
               key={`${c.kind}-${c.pageId}`}
               className="flex items-start gap-3 rounded-2xl border border-border bg-secondary/40 p-3"
