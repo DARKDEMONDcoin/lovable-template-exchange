@@ -375,6 +375,7 @@ function ChatPage() {
   }, [workspace, conversations, createConversation]);
 
   const [showSettings, setShowSettings] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const ask = useServerFn(askEmployee);
