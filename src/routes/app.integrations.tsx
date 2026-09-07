@@ -83,6 +83,8 @@ function IntegrationsPage() {
   // العودة إلى الصفحة التي بدأ منها الربط، وفتح ربط منصة بعينها مباشرة.
   const [backTo, setBackTo] = useState<string | null>(null);
   const [autoConnect, setAutoConnect] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [detail, setDetail] = useState<string | null>(null);
 
   useEffect(() => {
     void supabase.auth
