@@ -406,6 +406,68 @@ export type Database = {
           },
         ]
       }
+      meta_connections: {
+        Row: {
+          created_at: string
+          id: string
+          ig_user_id: string | null
+          ig_username: string | null
+          kind: string
+          last_error: string | null
+          page_access_token: string
+          page_id: string
+          page_name: string | null
+          scopes: string[]
+          status: string
+          token_expires_at: string | null
+          updated_at: string
+          user_access_token: string | null
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ig_user_id?: string | null
+          ig_username?: string | null
+          kind: string
+          last_error?: string | null
+          page_access_token: string
+          page_id: string
+          page_name?: string | null
+          scopes?: string[]
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_access_token?: string | null
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ig_user_id?: string | null
+          ig_username?: string | null
+          kind?: string
+          last_error?: string | null
+          page_access_token?: string
+          page_id?: string
+          page_name?: string | null
+          scopes?: string[]
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_access_token?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_connections_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pipedream_accounts: {
         Row: {
           account_id: string
