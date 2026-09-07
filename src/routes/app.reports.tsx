@@ -66,9 +66,13 @@ function Table({
 function SourceCard({
   label,
   status,
+  onConnect,
+  connecting,
 }: {
   label: string;
   status: { state: "ok" | "not_connected" | "not_selected" | "error"; message: string };
+  onConnect?: () => void;
+  connecting?: boolean;
 }) {
   const ok = status.state === "ok";
   const tone =
