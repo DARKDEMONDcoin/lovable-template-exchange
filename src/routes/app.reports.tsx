@@ -1,12 +1,15 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 import { AlertTriangle, CheckCircle2, Loader2, PlugZap, Printer } from "lucide-react";
 
 import { AppShell } from "@/components/app/AppShell";
 import { SeoAuditCard } from "@/components/app/SeoAuditCard";
+import { SearchConsoleSites } from "@/components/app/SearchConsoleSites";
 import { useWorkspace } from "@/lib/data";
 import { buildReport } from "@/lib/reports.functions";
+import { startSearchConsoleOAuth } from "@/lib/gsc.functions";
 
 export const Route = createFileRoute("/app/reports")({
   head: () => ({
