@@ -35,7 +35,17 @@ type TestResult = {
  * لوحة ميتا المباشرة: ربط الصفحات وحسابات إنستجرام بتطبيقنا الخاص،
  * معاينة شكل المنشور قبل إرساله، ونشر/اختبار حي يعرض معرّف المنشور أو سبب الفشل.
  */
-export function MetaDirect({ workspaceId }: { workspaceId: string | undefined }) {
+export function MetaDirect({
+  workspaceId,
+  only,
+  bare = false,
+}: {
+  workspaceId: string | undefined;
+  /** عرض منصة واحدة فقط (فيسبوك أو إنستجرام) داخل لوحة تفاصيل التطبيق. */
+  only?: "facebook" | "instagram";
+  /** بدون إطار القسم وعنوانه — للاستخدام داخل لوحة جانبية. */
+  bare?: boolean;
+}) {
   const status = useServerFn(metaStatus);
   const connect = useServerFn(startMetaConnect);
   const disconnect = useServerFn(disconnectMeta);
@@ -53,7 +63,7 @@ export function MetaDirect({ workspaceId }: { workspaceId: string | undefined })
   const [text, setText] = useState("مرحباً من سِراج — منشور تجريبي عبر النشر المباشر على ميتا.");
   const [imageUrl, setImageUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
-  const [target, setTarget] = useState<"facebook" | "instagram">("facebook");
+  const [target, setTarget] = useState<"facebook" | "instagram">(only ?? "facebook");
 
   const refresh = useCallback(async () => {
     if (!workspaceId) return;
@@ -164,20 +174,25 @@ export function MetaDirect({ workspaceId }: { workspaceId: string | undefined })
 
   const facebookPages = connections.filter((c) => c.kind === "facebook");
   const igAccounts = connections.filter((c) => c.kind === "instagram");
+  const shown = only ? connections.filter((c) => c.kind === only) : connections;
 
   return (
-    <section className="mb-6 rounded-3xl border border-border bg-card p-6">
+    <section className={bare ? "" : "mb-6 rounded-3xl border border-border bg-card p-6"}>
       <header className="flex flex-wrap items-center gap-3">
-        <AppIcon name="facebook" className="size-7" />
-        <AppIcon name="instagram" className="size-7" />
-        <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-black">النشر المباشر على ميتا</h2>
-          <p className="text-sm text-ink-soft">
-            ربط صفحات فيسبوك وحسابات إنستجرام بتطبيق ميتا الخاص بنا — أذونات نشر كاملة وتوكنات
-            طويلة المدى محفوظة على الخادم فقط.
-          </p>
-        </div>
-        <div className="flex shrink-0 gap-2">
+        {bare ? null : (
+          <>
+            <AppIcon name="facebook" className="size-7" />
+            <AppIcon name="instagram" className="size-7" />
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg font-black">النشر المباشر على ميتا</h2>
+              <p className="text-sm text-ink-soft">
+                ربط صفحات فيسبوك وحسابات إنستجرام بتطبيق ميتا الخاص بنا — أذونات نشر كاملة وتوكنات
+                طويلة المدى محفوظة على الخادم فقط.
+              </p>
+            </div>
+          </>
+        )}
+        <div className="flex shrink-0 flex-wrap gap-2">
           <button
             type="button"
             onClick={() => void startConnect()}
@@ -243,9 +258,9 @@ export function MetaDirect({ workspaceId }: { workspaceId: string | undefined })
 
 
 
-      {connections.length ? (
+      {shown.length ? (
         <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-          {connections.map((c) => (
+          {shown.map((c) => (
             <li
               key={`${c.kind}-${c.pageId}`}
               className="flex items-start gap-3 rounded-2xl border border-border bg-secondary/40 p-3"
@@ -272,10 +287,10 @@ export function MetaDirect({ workspaceId }: { workspaceId: string | undefined })
         </p>
       )}
 
-      {connections.length ? (
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      {shown.length ? (
+        <div className={cn("mt-6 grid gap-6", bare ? "" : "lg:grid-cols-2")}>
           <div className="space-y-3">
-            <div className="flex gap-2">
+            <div className={cn("flex gap-2", only ? "hidden" : "")}>
               {(["facebook", "instagram"] as const).map((p) => (
                 <button
                   key={p}

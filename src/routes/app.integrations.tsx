@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ShieldCheck, RefreshCw, Loader2, Plug } from "lucide-react";
+import { ShieldCheck, RefreshCw, Loader2, Search, X } from "lucide-react";
 
 import { AppShell } from "@/components/app/AppShell";
 import { AppIcon, appLabel } from "@/components/site/AppIcon";
@@ -49,6 +49,9 @@ const realProviders = new Set([
   "ghost",
 ]);
 
+/** فيسبوك وإنستجرام لهما لوحة ربط مباشرة مستقلة لكل منهما. */
+const isMeta = (provider: string) => provider === "facebook" || provider === "instagram";
+
 const gscMessages: Record<string, string> = {
   denied: "أُلغيت موافقة Google — لم يتم الربط.",
   token_failed: "تعذّر إكمال الربط مع Google، جرّب مرة أخرى.",
@@ -83,6 +86,8 @@ function IntegrationsPage() {
   // العودة إلى الصفحة التي بدأ منها الربط، وفتح ربط منصة بعينها مباشرة.
   const [backTo, setBackTo] = useState<string | null>(null);
   const [autoConnect, setAutoConnect] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [detail, setDetail] = useState<string | null>(null);
 
   useEffect(() => {
     void supabase.auth
@@ -142,8 +147,13 @@ function IntegrationsPage() {
   }, [pendingSync, workspace, qc, syncAccounts, backTo]);
 
   const all = integrations ?? [];
-  const connected = all.filter((i) => i.status === "connected").length;
-  const broken = all.filter((i) => i.status === "error");
+  // تطبيق واحد يظهر مرة واحدة فقط حتى لو استخدمه أكثر من موظف.
+  const unique = all.filter(
+    (i, idx) => all.findIndex((x) => x.provider === i.provider) === idx,
+  );
+  const connected = unique.filter((i) => i.status === "connected").length;
+  const broken = unique.filter((i) => i.status === "error");
+  const detailRow = unique.find((i) => i.provider === detail) ?? null;
 
   const refresh = async () => {
     if (!workspace) return;
@@ -290,8 +300,6 @@ function IntegrationsPage() {
       ) : null}
 
 
-      <MetaDirect workspaceId={workspace?.id} />
-
       {error ? (
         <p className="mb-6 rounded-2xl bg-coral/12 px-4 py-3 text-sm font-semibold text-coral">
           {error}
@@ -335,21 +343,22 @@ function IntegrationsPage() {
         </div>
       ) : null}
 
-      <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-secondary/50 p-4">
-        <Plug className="size-5 shrink-0 text-jade-deep" />
-        <p className="flex-1 text-sm font-semibold">
-          {pdReady === false
-            ? "وسيط التكاملات (Pipedream) غير مفعّل بعد — أضف مفاتيح Pipedream ليعمل ربط منصات التواصل والبريد وCRM."
-            : pdEnv === "development"
-              ? "وسيط الربط يعمل حالياً بوضع التجريب — الربط لن ينجح إلا لمن لديه حساب على Pipedream. حوّل PIPEDREAM_ENVIRONMENT إلى production ليربط عملاؤك حساباتهم."
-              : "منصات التواصل والبريد وCRM تُربط عبر Pipedream — لا نحتفظ بأي كلمات مرور أو توكنات لديك."}
-        </p>
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <div className="relative min-w-[12rem] flex-1">
+          <Search className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="ابحث عن تطبيق…"
+            className="w-full rounded-full border border-border bg-card py-2 pr-9 pl-4 text-sm"
+          />
+        </div>
         <button
           onClick={() => void refresh()}
           disabled={busy === "sync" || !workspace}
-          className="shrink-0 rounded-full bg-foreground px-3.5 py-1.5 text-xs font-bold text-background disabled:opacity-60"
+          className="inline-flex shrink-0 items-center gap-2 rounded-full border border-border px-3.5 py-2 text-xs font-bold disabled:opacity-60"
         >
-          {busy === "sync" ? "…" : "تحديث الحسابات"}
+          <RefreshCw className={cn("size-4", busy === "sync" && "animate-spin")} /> تحديث
         </button>
       </div>
 
@@ -362,7 +371,6 @@ function IntegrationsPage() {
         </div>
       ) : null}
 
-
       {isLoading ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" /> جارٍ التحميل…
@@ -370,10 +378,12 @@ function IntegrationsPage() {
       ) : (
         <div className="space-y-6">
           {team.map((m) => {
-            const owned = all.filter((i) => i.employee_id === m.id);
+            const owned = unique
+              .filter((i) => i.employee_id === m.id)
+              .filter((i) => !query.trim() || appLabel(i.provider).includes(query.trim()));
             if (!owned.length) return null;
             return (
-              <section key={m.id} className="rounded-3xl border border-border bg-card p-6">
+              <section key={m.id} className="rounded-3xl border border-border bg-card p-5 sm:p-6">
                 <div className="flex items-center gap-3">
                   <span
                     className="grid size-10 place-items-center rounded-2xl"
@@ -381,58 +391,56 @@ function IntegrationsPage() {
                   >
                     <m.icon className="size-5" strokeWidth={2.2} />
                   </span>
-                  <div>
+                  <div className="min-w-0">
                     <h2 className="font-display font-black">{m.name}</h2>
-                    <p className="text-sm text-muted-foreground">{m.role}</p>
+                    <p className="truncate text-sm text-muted-foreground">{m.role}</p>
                   </div>
+                  <span className="ms-auto shrink-0 text-xs font-bold text-muted-foreground">
+                    {owned.filter((i) => i.status === "connected").length}/{owned.length}
+                  </span>
                 </div>
 
-                <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   {owned.map((i) => (
-                    <div
+                    <button
                       key={i.id}
-                      className="flex items-center gap-3 rounded-2xl border border-border/70 p-4"
+                      type="button"
+                      onClick={() => setDetail(i.provider)}
+                      className="flex items-center gap-3 rounded-2xl border border-border/70 p-4 text-right transition-colors hover:border-foreground/30 hover:bg-secondary/40"
                     >
                       <AppIcon name={i.provider} className="size-6 shrink-0" />
                       <span className="min-w-0 flex-1">
-                        <span className="flex items-center gap-2 truncate text-sm font-bold">
+                        <span className="block truncate text-sm font-bold">
                           {appLabel(i.provider)}
-                          {realProviders.has(i.provider) ? (
-                            <span className="shrink-0 rounded-full bg-jade/12 px-2 py-0.5 text-[0.65rem] font-bold text-jade-deep">
-                              ربط مباشر
-                            </span>
-                          ) : isPipedreamProvider(i.provider) ? (
-                            <span className="shrink-0 rounded-full bg-sky/12 px-2 py-0.5 text-[0.65rem] font-bold text-sky">
-                              عبر Pipedream
-                            </span>
-                          ) : null}
                         </span>
-                        <span className="block truncate text-xs text-muted-foreground">
-                          {i.account ??
-                            pipedreamApp(i.provider)?.note ??
-                            "لم يُربط بعد"}
+                        <span
+                          className={cn(
+                            "block truncate text-xs",
+                            i.status === "connected"
+                              ? "text-jade-deep"
+                              : i.status === "error"
+                                ? "text-coral"
+                                : "text-muted-foreground",
+                          )}
+                        >
+                          {i.status === "connected"
+                            ? (i.account ?? integrationStatusLabel.connected)
+                            : i.status === "error"
+                              ? "يحتاج إعادة ربط"
+                              : "غير مربوط"}
                         </span>
                       </span>
-
-                      <button
-                        onClick={() => void toggle(i.id, i.status, i.provider)}
-                        disabled={busy === i.id}
+                      <span
                         className={cn(
-                          "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors disabled:opacity-60",
-                          i.status === "connected" && "bg-jade/12 text-jade-deep",
-                          i.status === "error" && "bg-coral text-background",
-                          i.status === "disconnected" && "bg-foreground text-background",
-                        )}
-                      >
-                        {busy === i.id
-                          ? "…"
-                          : i.status === "connected"
-                            ? integrationStatusLabel.connected
+                          "size-2 shrink-0 rounded-full",
+                          i.status === "connected"
+                            ? "bg-jade-deep"
                             : i.status === "error"
-                              ? "أعد الربط"
-                              : "اربط"}
-                      </button>
-                    </div>
+                              ? "bg-coral"
+                              : "bg-border",
+                        )}
+                      />
+                    </button>
                   ))}
                 </div>
               </section>
@@ -440,6 +448,86 @@ function IntegrationsPage() {
           })}
         </div>
       )}
+
+      {detailRow ? (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/40 p-0 sm:items-center sm:p-6"
+          onClick={() => setDetail(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl border border-border bg-card p-6 sm:rounded-3xl"
+          >
+            <div className="flex items-start gap-3">
+              <AppIcon name={detailRow.provider} className="size-8 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <h3 className="text-lg font-black">{appLabel(detailRow.provider)}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {isMeta(detailRow.provider)
+                    ? "ربط مباشر عبر تطبيق ميتا الخاص بنا — أذونات نشر كاملة."
+                    : realProviders.has(detailRow.provider)
+                      ? "ربط مباشر بالمنصة عبر OAuth الرسمي."
+                      : "ربط آمن عبر وسيط التكاملات — لا نحتفظ بكلمات مرورك."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDetail(null)}
+                aria-label="إغلاق"
+                className="shrink-0 rounded-full border border-border p-1.5 text-muted-foreground"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            {pipedreamApp(detailRow.provider)?.note && !isMeta(detailRow.provider) ? (
+              <p className="mt-4 rounded-2xl bg-secondary/60 px-4 py-3 text-sm leading-relaxed text-ink-soft">
+                {pipedreamApp(detailRow.provider)!.note}
+              </p>
+            ) : null}
+
+            {!isMeta(detailRow.provider) && isPipedreamProvider(detailRow.provider) && pdReady === false ? (
+              <p className="mt-4 rounded-2xl bg-amber/10 px-4 py-3 text-sm font-semibold">
+                وسيط التكاملات غير مفعّل بعد — أضف مفاتيحه لتفعيل هذا الربط.
+              </p>
+            ) : null}
+            {!isMeta(detailRow.provider) && isPipedreamProvider(detailRow.provider) && pdEnv === "development" ? (
+              <p className="mt-4 rounded-2xl bg-amber/10 px-4 py-3 text-sm font-semibold">
+                الوسيط يعمل بوضع التجريب حالياً — حوّله إلى الوضع الإنتاجي ليربط عملاؤك حساباتهم.
+              </p>
+            ) : null}
+
+            {isMeta(detailRow.provider) ? (
+              <div className="mt-4">
+                <MetaDirect
+                  workspaceId={workspace?.id}
+                  only={detailRow.provider === "facebook" ? "facebook" : "instagram"}
+                  bare
+                />
+              </div>
+            ) : (
+              <button
+                onClick={() => void toggle(detailRow.id, detailRow.status, detailRow.provider)}
+                disabled={busy === detailRow.id}
+                className={cn(
+                  "mt-5 inline-flex rounded-full px-4 py-2 text-xs font-bold transition-colors disabled:opacity-60",
+                  detailRow.status === "connected" && "border border-border",
+                  detailRow.status === "error" && "bg-coral text-background",
+                  detailRow.status === "disconnected" && "bg-foreground text-background",
+                )}
+              >
+                {busy === detailRow.id
+                  ? "…"
+                  : detailRow.status === "connected"
+                    ? "فصل الحساب"
+                    : detailRow.status === "error"
+                      ? "أعد الربط"
+                      : "اربط الآن"}
+              </button>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-6 flex items-start gap-3 rounded-3xl border border-border bg-secondary/50 p-6">
         <ShieldCheck className="size-5 shrink-0 text-jade-deep" />
