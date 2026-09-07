@@ -614,6 +614,16 @@ function ChatPage() {
                         />
                       ) : null}
 
+                      {!isUser
+                        ? (() => {
+                            const req = lastUserBefore(arr, idx);
+                            const handoff = detectHandoff(req, id);
+                            return handoff ? (
+                              <HandoffCard handoff={handoff} request={req} currentName={member.name} />
+                            ) : null;
+                          })()
+                        : null}
+
                       <div
                         className={cn(
                           "mt-1.5 flex items-center gap-2 text-[0.7rem]",
