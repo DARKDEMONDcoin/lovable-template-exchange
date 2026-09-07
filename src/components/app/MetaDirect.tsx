@@ -85,12 +85,21 @@ export function MetaDirect({ workspaceId }: { workspaceId: string | undefined })
       const res = await connect({
         data: { workspaceId, origin: window.location.origin, returnTo: "/app/integrations" },
       });
-      window.location.assign(res.url);
+      // فيسبوك يرفض الفتح داخل الإطار (معاينة لوفابل) — لذلك نفتح نافذة جديدة دائماً.
+      const win = window.open(res.url, "_blank", "noopener,noreferrer");
+      if (!win) {
+        setAuthUrl(res.url);
+        setError("المتصفح منع فتح النافذة — استخدم الرابط بالأسفل لإتمام الربط.");
+      } else {
+        setAuthUrl(res.url);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "تعذّر بدء ربط ميتا.");
+    } finally {
       setBusy(null);
     }
   };
+
 
   const runTest = async () => {
     if (!workspaceId) return;
