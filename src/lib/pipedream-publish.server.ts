@@ -127,9 +127,26 @@ export async function publishToPlatform(
 ): Promise<PublishResult> {
   const app = pipedreamApp(params.provider);
   const metaProxy = params.provider === "instagram" || params.provider === "facebook";
+
+  // المسار الهجين: إن كان ميتا مربوطاً مباشرةً بتطبيقنا الخاص (توكن صفحة محفوظ)،
+  // ننشر عبر Graph API مباشرة — أدق وأسرع ولا يقيّده تطبيق الوسيط المشترك.
+  if (metaProxy) {
+    const { hasMetaDirect, metaPublish } = await import("./meta.server");
+    const provider = params.provider as "facebook" | "instagram";
+    if (await hasMetaDirect(admin, params.workspaceId, provider)) {
+      const result = await metaPublish(admin, params.workspaceId, provider, {
+        text: params.text,
+        imageUrl: params.imageUrl,
+        videoUrl: params.videoUrl,
+      });
+      return { provider: params.provider, accountId: `meta:${result.pageId}`, result };
+    }
+  }
+
   if (!metaProxy && (!app?.publishComponent || !app.accountProp)) {
     throw new Error(`النشر المباشر غير متاح بعد على ${app?.label ?? params.provider}.`);
   }
+
 
   const config = await pipedreamConfig();
   if (!config) throw missingConfigError();
