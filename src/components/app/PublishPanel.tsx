@@ -141,13 +141,46 @@ export function PublishPanel({ workspaceId, employeeId, taskId, channel, request
     onPublished?.();
   };
 
-  const suggestBestTime = (index: number) => {
+  /** يجلب أفضل المواعيد الحقيقية للمنصة الأولى المختارة (جمهورك ← سجلّك ← متوسطات). */
+  const loadBestTimes = async () => {
     const target = active[0];
     if (!target) return;
-    const at = bestTimeFor(target, index ? new Date(slots[index - 1] ?? Date.now()) : new Date());
-    setSlots((s) => s.map((v, i) => (i === index ? localInputValue(at) : v)));
-    setNote(`أفضل وقت مقترح لـ${appLabel(target)}: ${at.toLocaleString("ar-EG")}`);
+    setLoadingTimes(true);
+    setNote(null);
+    try {
+      const result = (await askBestTimes({
+        data: {
+          workspaceId,
+          provider: target,
+          tzOffsetMinutes: -new Date().getTimezoneOffset(),
+        },
+      })) as BestTimes;
+      setBestTimes(result);
+    } catch (e) {
+      // تعذّر الحساب الحقيقي: نرجع لمتوسط المنصة بدل ترك المستخدم بلا اقتراح.
+      const at = bestTimeFor(target);
+      setBestTimes({
+        source: "baseline",
+        samples: 0,
+        note: e instanceof Error ? e.message : "تعذّر حساب بيانات جمهورك الآن.",
+        slots: [{ at: at.toISOString(), hour: at.getHours(), weekday: at.getDay(), score: 0 }],
+      });
+    } finally {
+      setLoadingTimes(false);
+    }
   };
+
+  /** يطبّق موعداً مقترحاً على خانة محددة (والمستخدم حرّ في تعديله بعدها). */
+  const applySlot = (index: number, iso: string) =>
+    setSlots((all) => all.map((v, i) => (i === index ? localInputValue(new Date(iso)) : v)));
+
+  /** إزاحة سريعة: نفس التوقيت بعد عدد أيام. */
+  const shiftDays = (index: number, days: number) =>
+    setSlots((all) =>
+      all.map((v, i) =>
+        i === index ? localInputValue(new Date(new Date(v).getTime() + days * 86_400_000)) : v,
+      ),
+    );
 
   const onFile = async (file: File | undefined) => {
     if (!file) return;
