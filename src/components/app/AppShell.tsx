@@ -74,56 +74,45 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
   const { data: workspace } = useWorkspace();
   const { data: tasks } = useTasks(workspace?.id);
   const pendingCount = (tasks ?? []).filter((t) => t.status === "review").length;
-  const doneCount = (tasks ?? []).filter((t) => t.status === "done").length;
-  const total = 50;
+  const inSecondary = secondaryNav.some((i) => pathname.startsWith(i.to));
+  const [moreOpen, setMoreOpen] = useState(inSecondary);
+
+  const renderItem = (item: { to: string; label: string; icon: typeof Bell }) => {
+    const active = item.to === "/app" ? pathname === "/app" : pathname.startsWith(item.to);
+    const badge = item.to === "/app/approvals" ? pendingCount : 0;
+    return (
+      <Link
+        key={item.to}
+        to={item.to}
+        onClick={onNavigate}
+        className={cn(
+          "flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-bold transition-colors",
+          active ? "bg-foreground text-background" : "text-ink-soft hover:bg-secondary",
+        )}
+      >
+        <item.icon className="size-4.5 shrink-0" strokeWidth={2.2} />
+        <span className="flex-1">{item.label}</span>
+        {badge ? (
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 text-[0.7rem] font-black",
+              active ? "bg-background/20" : "bg-coral/15 text-coral",
+            )}
+          >
+            {badge}
+          </span>
+        ) : null}
+      </Link>
+    );
+  };
 
   return (
-    <div className="flex h-full flex-col gap-6 p-5">
+    <div className="flex h-full flex-col gap-5 p-5">
       <Link to="/" className="font-display text-2xl font-black tracking-tight">
         سهل<span className="text-jade">.</span>
       </Link>
 
       <WorkspaceCard />
-
-      <nav className="space-y-4">
-        {navGroups.map((group) => (
-          <div key={group.label || "main"} className="space-y-1">
-            {group.label ? (
-              <p className="px-3.5 pb-1 text-xs font-bold text-muted-foreground">{group.label}</p>
-            ) : null}
-            {group.items.map((item) => {
-              const active =
-                item.to === "/app" ? pathname === "/app" : pathname.startsWith(item.to);
-              const badge = item.to === "/app/approvals" ? pendingCount : 0;
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  onClick={onNavigate}
-                  className={cn(
-                    "flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-bold transition-colors",
-                    active ? "bg-foreground text-background" : "text-ink-soft hover:bg-secondary",
-                  )}
-                >
-                  <item.icon className="size-4.5 shrink-0" strokeWidth={2.2} />
-                  <span className="flex-1">{item.label}</span>
-                  {badge ? (
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-[0.7rem] font-black",
-                        active ? "bg-background/20" : "bg-coral/15 text-coral",
-                      )}
-                    >
-                      {badge}
-                    </span>
-                  ) : null}
-                </Link>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
-
 
       <div className="space-y-1.5">
         <p className="px-2 text-xs font-bold text-muted-foreground">فريقك</p>
@@ -147,32 +136,35 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
         ))}
       </div>
 
-      <div className="mt-auto rounded-2xl border border-border bg-secondary/50 p-4">
-        <div className="flex items-baseline justify-between">
-          <span className="text-xs font-bold text-ink-soft">مهام منجزة هذا الشهر</span>
-          <span className="font-display text-sm font-black">
-            {doneCount}/{total}
-          </span>
-        </div>
-        <div className="mt-2 h-2 overflow-hidden rounded-full bg-card">
-          <div
-            className="h-full rounded-full"
-            style={{
-              width: `${Math.min(100, (doneCount / total) * 100)}%`,
-              backgroundImage: "var(--gradient-aurora)",
-            }}
-          />
-        </div>
-        <Link
-          to="/pricing"
-          className="mt-3 block rounded-xl bg-foreground py-2 text-center text-xs font-bold text-background"
+      <nav className="space-y-1">
+        {primaryNav.map(renderItem)}
+
+        <button
+          type="button"
+          onClick={() => setMoreOpen((v) => !v)}
+          aria-expanded={moreOpen}
+          className="flex w-full items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-bold text-ink-soft transition-colors hover:bg-secondary"
         >
-          زد ساعات فريقك
-        </Link>
-      </div>
+          <ChevronDown
+            className={cn("size-4.5 shrink-0 transition-transform", moreOpen && "rotate-180")}
+            strokeWidth={2.2}
+          />
+          <span className="flex-1 text-start">{moreOpen ? "أقل" : "المزيد"}</span>
+        </button>
+
+        {moreOpen ? <div className="space-y-1">{secondaryNav.map(renderItem)}</div> : null}
+      </nav>
+
+      <Link
+        to="/pricing"
+        className="mt-auto block rounded-xl bg-foreground py-2 text-center text-xs font-bold text-background"
+      >
+        زد ساعات فريقك
+      </Link>
     </div>
   );
 }
+
 
 /** شريط يوضّح أن الجلسة الحالية تجريبية ويقود لإنشاء حساب حقيقي. */
 function GuestBar() {
