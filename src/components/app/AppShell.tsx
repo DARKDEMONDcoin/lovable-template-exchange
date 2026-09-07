@@ -29,44 +29,27 @@ import { GUEST_EMAIL } from "@/lib/guest.functions";
 import { useProfile, useTasks, useWorkspace } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
-/** أقسام مجمّعة: كل مجموعة تجيب سؤالاً واحداً لصاحب العمل. */
-const navGroups = [
-  {
-    label: "",
-    items: [
-      { to: "/app", label: "النظرة العامة", icon: LayoutDashboard, exact: true },
-      { to: "/app/chat", label: "المحادثات", icon: MessagesSquare },
-      { to: "/app/approvals", label: "الموافقات", icon: CheckCheck },
-    ],
-  },
-  {
-    label: "المحتوى والنشر",
-    items: [
-      { to: "/app/calendar", label: "تقويم المحتوى", icon: CalendarDays },
-      { to: "/app/queue", label: "طابور النشر", icon: Send },
-      { to: "/app/autopilot", label: "الطيار الآلي", icon: Plane },
-      { to: "/app/automations", label: "الجدولة التلقائية", icon: CalendarClock },
-      { to: "/app/tasks", label: "المهام", icon: ListChecks },
-    ],
-  },
-  {
-    label: "النمو والقياس",
-    items: [
-      { to: "/app/discovery", label: "كشف العلامة", icon: Radar },
-      { to: "/app/rankings", label: "تتبّع الترتيب", icon: LineChart },
-
-      { to: "/app/reports", label: "التقارير", icon: FileBarChart },
-      { to: "/app/brain", label: "عقل العلامة", icon: BrainCircuit },
-    ],
-  },
-  {
-    label: "الإعداد",
-    items: [
-      { to: "/app/integrations", label: "التكاملات", icon: Plug },
-      { to: "/app/settings", label: "الإعدادات", icon: Settings },
-    ],
-  },
+/** الأساسي دائماً ظاهر؛ الباقي خلف «المزيد» حتى تبقى الواجهة هادئة. */
+const primaryNav = [
+  { to: "/app", label: "النظرة العامة", icon: LayoutDashboard },
+  { to: "/app/chat", label: "المحادثات", icon: MessagesSquare },
+  { to: "/app/approvals", label: "الموافقات", icon: CheckCheck },
+  { to: "/app/calendar", label: "تقويم المحتوى", icon: CalendarDays },
+  { to: "/app/queue", label: "طابور النشر", icon: Send },
 ] as const;
+
+const secondaryNav = [
+  { to: "/app/autopilot", label: "الطيار الآلي", icon: Plane },
+  { to: "/app/automations", label: "الجدولة التلقائية", icon: CalendarClock },
+  { to: "/app/tasks", label: "المهام", icon: ListChecks },
+  { to: "/app/discovery", label: "كشف العلامة", icon: Radar },
+  { to: "/app/rankings", label: "تتبّع الترتيب", icon: LineChart },
+  { to: "/app/reports", label: "التقارير", icon: FileBarChart },
+  { to: "/app/brain", label: "عقل العلامة", icon: BrainCircuit },
+  { to: "/app/integrations", label: "التكاملات", icon: Plug },
+  { to: "/app/settings", label: "الإعدادات", icon: Settings },
+] as const;
+
 
 
 function WorkspaceCard() {
