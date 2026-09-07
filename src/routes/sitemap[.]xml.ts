@@ -23,7 +23,13 @@ const staticPaths = [
   "/security",
   "/privacy",
   "/terms",
+  "/cookies",
+  "/acceptable-use",
+  "/dpa",
+  "/subprocessors",
+  "/refunds",
 ];
+
 
 function escapeXml(value: string) {
   return value.replace(
