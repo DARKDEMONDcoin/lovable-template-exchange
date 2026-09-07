@@ -287,10 +287,10 @@ export function MetaDirect({
         </p>
       )}
 
-      {connections.length ? (
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      {shown.length ? (
+        <div className={cn("mt-6 grid gap-6", bare ? "" : "lg:grid-cols-2")}>
           <div className="space-y-3">
-            <div className="flex gap-2">
+            <div className={cn("flex gap-2", only ? "hidden" : "")}>
               {(["facebook", "instagram"] as const).map((p) => (
                 <button
                   key={p}
