@@ -21,6 +21,16 @@ import { useConnectedAccounts } from "@/lib/data";
 import { adaptForProvider, bestTimeFor, sanitizePostBody } from "@/lib/post-format";
 import { PUBLISHABLE, requestedPublishTargets, providerLabel } from "@/lib/platforms";
 import { publishSocialNow, scheduleSocialPost, uploadSocialMedia } from "@/lib/social-queue.functions";
+import { bestPostingTimes } from "@/lib/best-time.functions";
+
+type BestTimes = {
+  source: "audience" | "history" | "baseline";
+  samples: number;
+  note: string;
+  slots: { at: string; hour: number; weekday: number; score: number }[];
+};
+
+const WEEKDAYS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
 /** يلتقط أول صورة داخل المخرج (رابط مباشر أو صيغة ماركداون). */
 export function imageFromOutput(text: string | null | undefined): string | null {
@@ -116,6 +126,14 @@ export function PublishPanel({ workspaceId, employeeId, taskId, channel, request
   const [busy, setBusy] = useState<"now" | "later" | null>(null);
   const [note, setNote] = useState<string | null>(null);
 
+  // لوحة النشر اختيارية تماماً: لا تفتح إلا إذا أراد المستخدم نشر هذا الرد.
+  const [open, setOpen] = useState(false);
+
+  // أفضل وقت حقيقي محسوب من جمهور المستخدم/سجلّه.
+  const askBestTimes = useServerFn(bestPostingTimes);
+  const [bestTimes, setBestTimes] = useState<BestTimes | null>(null);
+  const [loadingTimes, setLoadingTimes] = useState(false);
+
   const done = (message: string) => {
     setNote(message);
     void qc.invalidateQueries({ queryKey: ["social-posts", workspaceId] });
@@ -123,13 +141,46 @@ export function PublishPanel({ workspaceId, employeeId, taskId, channel, request
     onPublished?.();
   };
 
-  const suggestBestTime = (index: number) => {
+  /** يجلب أفضل المواعيد الحقيقية للمنصة الأولى المختارة (جمهورك ← سجلّك ← متوسطات). */
+  const loadBestTimes = async () => {
     const target = active[0];
     if (!target) return;
-    const at = bestTimeFor(target, index ? new Date(slots[index - 1] ?? Date.now()) : new Date());
-    setSlots((s) => s.map((v, i) => (i === index ? localInputValue(at) : v)));
-    setNote(`أفضل وقت مقترح لـ${appLabel(target)}: ${at.toLocaleString("ar-EG")}`);
+    setLoadingTimes(true);
+    setNote(null);
+    try {
+      const result = (await askBestTimes({
+        data: {
+          workspaceId,
+          provider: target,
+          tzOffsetMinutes: -new Date().getTimezoneOffset(),
+        },
+      })) as BestTimes;
+      setBestTimes(result);
+    } catch (e) {
+      // تعذّر الحساب الحقيقي: نرجع لمتوسط المنصة بدل ترك المستخدم بلا اقتراح.
+      const at = bestTimeFor(target);
+      setBestTimes({
+        source: "baseline",
+        samples: 0,
+        note: e instanceof Error ? e.message : "تعذّر حساب بيانات جمهورك الآن.",
+        slots: [{ at: at.toISOString(), hour: at.getHours(), weekday: at.getDay(), score: 0 }],
+      });
+    } finally {
+      setLoadingTimes(false);
+    }
   };
+
+  /** يطبّق موعداً مقترحاً على خانة محددة (والمستخدم حرّ في تعديله بعدها). */
+  const applySlot = (index: number, iso: string) =>
+    setSlots((all) => all.map((v, i) => (i === index ? localInputValue(new Date(iso)) : v)));
+
+  /** إزاحة سريعة: نفس التوقيت بعد عدد أيام. */
+  const shiftDays = (index: number, days: number) =>
+    setSlots((all) =>
+      all.map((v, i) =>
+        i === index ? localInputValue(new Date(new Date(v).getTime() + days * 86_400_000)) : v,
+      ),
+    );
 
   const onFile = async (file: File | undefined) => {
     if (!file) return;
@@ -225,6 +276,7 @@ export function PublishPanel({ workspaceId, employeeId, taskId, channel, request
       if (!connected.includes(provider as (typeof PUBLISHABLE)[number])) return;
       sessionStorage.removeItem(key);
       setPicked([provider]);
+      setOpen(true);
       void run("now", [provider]);
     } catch {
       sessionStorage.removeItem(key);
@@ -249,8 +301,30 @@ export function PublishPanel({ workspaceId, employeeId, taskId, channel, request
       on ? "border-foreground bg-foreground text-background" : "border-border hover:bg-secondary"
     }`;
 
+  // النشر اختيار المستخدم وحده: نعرض زراً هادئاً، ولا تفتح اللوحة إلا بطلبه.
+  if (!open) {
+    return (
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-xs font-bold hover:bg-secondary"
+        >
+          <Send className="size-3.5" /> انشر هذا المنشور
+        </button>
+        <span className="text-[11px] text-muted-foreground">اختياري — أنت تختار المنصة واليوم والساعة.</span>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-4 rounded-2xl border border-border bg-secondary/30 p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-xs font-bold text-muted-foreground">خيارات النشر</span>
+        <button type="button" onClick={() => setOpen(false)} className="text-xs font-bold text-muted-foreground hover:underline">
+          إخفاء
+        </button>
+      </div>
       {/* المنصات: كل منصات النشر المدعومة كخيارات — والمطلوب صراحةً مُبرَز */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-bold text-muted-foreground">انشر على</span>
@@ -388,7 +462,7 @@ export function PublishPanel({ workspaceId, employeeId, taskId, channel, request
 
       {/* المواعيد */}
       <div className="mt-4">
-        <span className="text-xs font-bold text-muted-foreground">مواعيد الجدولة (اختياري — أضف ما تشاء)</span>
+        <span className="text-xs font-bold text-muted-foreground">مواعيد الجدولة (اختياري — أي يوم وأي ساعة تريد)</span>
         <div className="mt-2 space-y-2">
           {slots.map((s, i) => (
             <div key={i} className="flex flex-wrap items-center gap-2">
@@ -399,14 +473,35 @@ export function PublishPanel({ workspaceId, employeeId, taskId, channel, request
                 aria-label={`موعد النشر ${i + 1}`}
                 className="rounded-full border border-border bg-card px-4 py-2 text-sm"
               />
+              <button type="button" onClick={() => shiftDays(i, 1)} className="rounded-full border border-border px-3 py-2 text-xs font-bold hover:bg-secondary">
+                +يوم
+              </button>
+              <button type="button" onClick={() => shiftDays(i, 7)} className="rounded-full border border-border px-3 py-2 text-xs font-bold hover:bg-secondary">
+                +أسبوع
+              </button>
               <button
                 type="button"
-                onClick={() => suggestBestTime(i)}
-                disabled={!active.length}
+                onClick={() => void loadBestTimes()}
+                disabled={!active.length || loadingTimes}
                 className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-2 text-xs font-bold hover:bg-secondary disabled:opacity-60"
               >
-                <Sparkles className="size-3.5" /> أفضل وقت
+                {loadingTimes ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+                أفضل وقت لجمهورك
               </button>
+              {bestTimes?.slots.length ? (
+                <span className="flex flex-wrap gap-1.5">
+                  {bestTimes.slots.map((slot) => (
+                    <button
+                      key={slot.at}
+                      type="button"
+                      onClick={() => applySlot(i, slot.at)}
+                      className="rounded-full border border-jade/40 bg-jade/10 px-3 py-1.5 text-[11px] font-bold text-jade-deep hover:bg-jade/20"
+                    >
+                      {WEEKDAYS[slot.weekday]} {String(slot.hour).padStart(2, "0")}:00
+                    </button>
+                  ))}
+                </span>
+              ) : null}
               {slots.length > 1 ? (
                 <button type="button" onClick={() => setSlots((all) => all.filter((_, j) => j !== i))} aria-label="حذف الموعد" className="rounded-full p-2 text-muted-foreground hover:bg-secondary">
                   <Trash2 className="size-4" />
@@ -424,7 +519,9 @@ export function PublishPanel({ workspaceId, employeeId, taskId, channel, request
             </button>
           ) : null}
         </div>
+        {bestTimes ? <p className="mt-2 text-[11px] text-muted-foreground">{bestTimes.note}</p> : null}
       </div>
+
 
       {/* الإجراءات */}
       <div className="mt-4 flex flex-wrap items-center gap-2">
