@@ -1,44 +1,96 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 
 import { Portrait } from "@/components/site/Portrait";
 import { cn } from "@/lib/utils";
 
-/** عبارات تتبدّل أثناء عمل الموظف — لكل موظف لمسته. */
-const PHASES: Record<string, string[]> = {
-  nour: [
-    "تقرأ عقل العلامة…",
-    "تحلّل نية البحث…",
-    "تصوغ المخرج بعربية طبيعية…",
-    "تراجع الجودة قبل التسليم…",
-  ],
-  sonny: [
-    "يقرأ نبرة علامتك…",
-    "يدرس ما ينجح على المنصة…",
-    "يصوغ منشوراً يوقف التمرير…",
-    "يضبط الهاشتاقات والتوقيت…",
-  ],
-  eva: ["تراجع سجل العميل…", "تفهم السياق…", "تكتب رداً مهذباً وحاسماً…"],
-  sam: ["يحلّل البيانات…", "يبحث عن الفرصة الأقرب…", "يجهّز الخطوة التالية…"],
-  dana: ["تدرس هوية العلامة…", "تجرّب الألوان والتكوين…", "تُخرج التصميم بلمسة نهائية…"],
-  adam: ["يراجع الأرقام…", "يرصد الأنماط…", "يكتب التقرير بوضوح…"],
+/** لمسة كل موظف: أول مرحلة وآخر مرحلة تعكسان مهنته. */
+const OPENING: Record<string, string> = {
+  nour: "تقرأ طلبك وتحدّد نية البحث",
+  sonny: "يقرأ طلبك ويحدّد زاوية المنشور",
+  eva: "تقرأ الرسالة وتفهم سياق العميل",
+  sam: "يقرأ الطلب ويحدد الفرصة",
+  dana: "تقرأ الطلب وتحدّد الاتجاه البصري",
+  adam: "يقرأ الطلب ويحدد الأرقام المطلوبة",
 };
-const FALLBACK = ["يقرأ طلبك…", "يفكّر…", "يجهّز المخرج…"];
+const CLOSING: Record<string, string> = {
+  nour: "تراجع الدقة والمصادر قبل التسليم",
+  sonny: "يضبط النبرة والهاشتاقات",
+  eva: "تراجع الرد قبل الإرسال",
+  sam: "يجهّز الخطوة التالية",
+  dana: "تضبط اللمسة النهائية",
+  adam: "يكتب الخلاصة بوضوح",
+};
+
+/**
+ * مراحل مشتقّة من الطلب الفعلي — لا عبارات محفوظة عامة: نقرأ ما طلبه المستخدم
+ * (بحث، رابط، صورة، نشر، جدولة، منافس…) ونعرض الخطوات التي ستُنفَّذ فعلاً.
+ */
+export function phasesFor(
+  memberId: string,
+  request: string,
+  opts: { imageRequested?: boolean; attachments?: number } = {},
+): string[] {
+  const t = (request ?? "").toLowerCase();
+  const has = (...w: string[]) => w.some((x) => t.includes(x));
+  const steps: string[] = [OPENING[memberId] ?? "يقرأ طلبك"];
+
+  if (opts.attachments) steps.push(`يفحص ${opts.attachments} مرفقاً أرسلته`);
+  steps.push("يستحضر عقل علامتك ونبرتها");
+
+  const urls = (request.match(/https?:\/\/\S+/g) ?? []).length;
+  if (urls) steps.push(urls > 1 ? `يحلّل ${urls} روابط أرسلتها` : "يحلّل الرابط الذي أرسلته");
+  if (has("منافس", "مقارنة", "competitor")) steps.push("يقارن بمحتوى المنافسين");
+  if (has("بحث", "كلمات", "سيو", "seo", "ترتيب", "كيوورد")) steps.push("يبحث في مصادر حية ويجمع الأدلة");
+  if (has("تحليل", "تقرير", "أرقام", "نتائج", "احصائ", "إحصائ")) steps.push("يقرأ البيانات ويستخرج الأنماط");
+  if (has("انستغرام", "انستقرام", "instagram")) steps.push("يكيّف الصياغة لإنستغرام");
+  if (has("فيسبوك", "facebook")) steps.push("يكيّف الصياغة لفيسبوك");
+  if (has("لينكد", "linkedin")) steps.push("يكيّف الصياغة لينكدإن");
+  if (has("انشر", "نشر", "publish")) steps.push("يجهّز المنشور للنشر ويتحقق من الاتصال");
+  if (has("جدول", "موعد", "بكرة", "غدا", "الأسبوع")) steps.push("يحسب أفضل توقيت للجدولة");
+  if (opts.imageRequested || has("صورة", "صور", "تصميم")) steps.push("يصوغ وصف الصورة ثم يولّدها");
+  if (has("مقال", "تدوينة", "طويل", "دليل")) steps.push("يبني الهيكل ثم يكتب الأقسام");
+
+  steps.push("يصوغ المخرج بعربية طبيعية");
+  steps.push(CLOSING[memberId] ?? "يراجع الجودة قبل التسليم");
+  return Array.from(new Set(steps));
+}
 
 export function Thinking({
   memberId,
   name,
   className,
+  request = "",
+  imageRequested,
+  attachments,
 }: {
   memberId: string;
   name: string;
   className?: string;
+  request?: string;
+  imageRequested?: boolean;
+  attachments?: number;
 }) {
-  const phases = PHASES[memberId] ?? FALLBACK;
+  const phases = useMemo(
+    () => phasesFor(memberId, request, { ...(imageRequested !== undefined ? { imageRequested } : {}), ...(attachments !== undefined ? { attachments } : {}) }),
+    [memberId, request, imageRequested, attachments],
+  );
   const [i, setI] = useState(0);
+  const [secs, setSecs] = useState(0);
+  const started = useRef(Date.now());
 
   useEffect(() => {
-    const t = setInterval(() => setI((v) => (v + 1) % phases.length), 2400);
+    started.current = Date.now();
+    setI(0);
+    setSecs(0);
+  }, [request]);
+
+  useEffect(() => {
+    // آخر مرحلة تبقى ظاهرة حتى يصل الرد فعلاً — لا نلفّ من البداية كأننا نعيد العمل.
+    const t = setInterval(() => {
+      setSecs(Math.round((Date.now() - started.current) / 1000));
+      setI((v) => Math.min(v + 1, phases.length - 1));
+    }, 2200);
     return () => clearInterval(t);
   }, [phases.length]);
 
@@ -66,11 +118,26 @@ export function Thinking({
             <span className="size-1.5 rounded-full bg-primary think-dot [animation-delay:0.18s]" />
             <span className="size-1.5 rounded-full bg-primary think-dot [animation-delay:0.36s]" />
           </span>
-          <span key={i} className="text-sm font-bold shimmer-text animate-fade-in">
-            {name} {phases[i]}
+          <span key={i} className="min-w-0 truncate text-sm font-bold shimmer-text animate-fade-in">
+            {name} {phases[i]}…
           </span>
+          {secs > 3 ? (
+            <span className="ms-auto shrink-0 text-[0.7rem] font-semibold tabular-nums text-muted-foreground">
+              {secs}ث
+            </span>
+          ) : null}
         </div>
-        <div className="mt-3.5 space-y-2" aria-hidden>
+
+        <ol className="mt-3 space-y-1.5 text-[0.72rem] text-muted-foreground">
+          {phases.slice(Math.max(0, i - 2), i).map((p) => (
+            <li key={p} className="flex items-center gap-1.5">
+              <span className="size-1.5 rounded-full bg-jade" aria-hidden />
+              <span className="truncate line-through/0">{p}</span>
+            </li>
+          ))}
+        </ol>
+
+        <div className="mt-3 space-y-2" aria-hidden>
           <span className="block h-2.5 w-[92%] rounded-full shimmer-line" />
           <span className="block h-2.5 w-[74%] rounded-full shimmer-line [animation-delay:0.2s]" />
           <span className="block h-2.5 w-[58%] rounded-full shimmer-line [animation-delay:0.4s]" />
