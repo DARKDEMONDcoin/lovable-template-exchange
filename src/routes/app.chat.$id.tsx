@@ -16,6 +16,7 @@ import { Thinking } from "@/components/app/Thinking";
 import { Markdown } from "@/components/app/Markdown";
 import { PublishPanel } from "@/components/app/PublishPanel";
 import { requestedPublishTargets } from "@/lib/platforms";
+import { isNonPostReply } from "@/lib/post-format";
 import { PublishToWordPress } from "@/components/app/PublishToWordPress";
 import { ActionPanel } from "@/components/app/ActionPanel";
 import { Portrait } from "@/components/site/Portrait";
@@ -166,6 +167,7 @@ function looksPostable(body: string): boolean {
   const text = body.trim();
   if (text.length < 80) return false;
   if (/^[^\n]{0,200}\?\s*$/.test(text)) return false;
+  if (isNonPostReply(text)) return false;
   return /#[^\s#]{2,}/.test(text) || text.length > 220;
 }
 

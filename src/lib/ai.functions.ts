@@ -627,7 +627,19 @@ export const askEmployee = createServerFn({ method: "POST" })
     }
 
 
+    // مخرج واحد جاهز للنشر: نص المنشور نفسه هو أهم ما يراه المستخدم — نضعه في صدر الرد
+    // ونضع تعليق الموظف بعده خلف فاصل، حتى تلتقطه لوحة النشر نظيفاً بلا كلام موظف.
+    if (deliverables.length === 1) {
+      const postBody = (deliverables[0]?.body ?? "").trim();
+      const head = postBody.slice(0, 40);
+      if (postBody.length > 60 && head && !reply.includes(head)) {
+        const note = reply.trim();
+        reply = note ? `${postBody}\n\n---\n\n**ملاحظة للمستخدم:** ${note}` : postBody;
+      }
+    }
+
     reply = sanitizeActionClaims(reply, connected);
+
     const footers = toolBlocks.map((t) => t.footer).filter(Boolean);
     if (footers.length) reply = `${reply.trim()}\n\n> ${footers.join(" · ")}`;
 
