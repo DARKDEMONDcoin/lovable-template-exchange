@@ -276,6 +276,7 @@ export function PublishPanel({ workspaceId, employeeId, taskId, channel, request
       if (!connected.includes(provider as (typeof PUBLISHABLE)[number])) return;
       sessionStorage.removeItem(key);
       setPicked([provider]);
+      setOpen(true);
       void run("now", [provider]);
     } catch {
       sessionStorage.removeItem(key);
