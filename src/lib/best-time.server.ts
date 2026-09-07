@@ -80,9 +80,9 @@ async function instagramAudienceHours(
   offsetMin: number,
 ): Promise<{ hour: number; score: number }[] | null> {
   const target = await metaTarget(admin, workspaceId, "instagram");
-  if (!target?.igUserId || !target.pageAccessToken) return null;
+  if (!target?.igUserId || !target.pageToken) return null;
   const payload = await graph(
-    `${GRAPH}/${target.igUserId}/insights?metric=online_followers&period=lifetime&access_token=${encodeURIComponent(target.pageAccessToken)}`,
+    `${GRAPH}/${target.igUserId}/insights?metric=online_followers&period=lifetime&access_token=${encodeURIComponent(target.pageToken)}`,
   );
   const data = (payload as { data?: { values?: { value?: unknown }[] }[] } | null)?.data;
   if (!Array.isArray(data) || !data.length) return null;
@@ -173,7 +173,7 @@ export async function computeBestTimes(
     let token: string | null = null;
     if (provider === "facebook" || provider === "instagram") {
       const target = await metaTarget(admin, workspaceId, provider);
-      token = target?.pageAccessToken ?? null;
+      token = target?.pageToken ?? null;
     }
 
     const buckets = new Map<string, { hour: number; weekday: number; score: number; n: number }>();
