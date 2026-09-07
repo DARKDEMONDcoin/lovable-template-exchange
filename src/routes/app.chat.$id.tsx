@@ -487,19 +487,20 @@ function ChatPage() {
             "grid size-10 place-items-center rounded-xl border border-border transition-colors",
             showSettings ? "bg-foreground text-background" : "hover:bg-secondary",
           )}
-          aria-label="إعدادات الموظف"
+          aria-label="المحادثات وتفاصيل الموظف"
+          title="المحادثات وتفاصيل الموظف"
         >
-          <Settings2 className="size-4.5" />
+          <PanelRight className="size-4.5" />
         </button>
       }
     >
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className={cn("grid", showSettings && "lg:grid-cols-[minmax(0,1fr)_20rem]")}>
         <div className="relative flex min-h-[calc(100dvh-5.3rem)] min-w-0 flex-col">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[radial-gradient(60%_100%_at_50%_0%,color-mix(in_oklab,var(--primary)_9%,transparent),transparent)]"
           />
-          <div className="relative mx-auto w-full max-w-4xl flex-1 space-y-4 px-5 py-6">
+          <div className="relative mx-auto w-full max-w-3xl flex-1 space-y-4 px-5 py-6">
             {brainItems && !hasVoiceGuide && ["sonny", "nour", "eva", "dana"].includes(id) ? (
               <Link
                 to="/app/brain"
@@ -732,7 +733,7 @@ function ChatPage() {
                 e.preventDefault();
                 submit(draft);
               }}
-              className="mx-auto max-w-4xl rounded-3xl border border-border bg-card p-2 shadow-card transition-all focus-within:border-primary focus-within:shadow-lift focus-within:ring-4 focus-within:ring-primary/10"
+              className="mx-auto max-w-3xl rounded-3xl border border-border bg-card p-2 shadow-card transition-all focus-within:border-primary focus-within:shadow-lift focus-within:ring-4 focus-within:ring-primary/10"
             >
               <textarea
                 ref={inputRef}
@@ -768,6 +769,7 @@ function ChatPage() {
                 <SkillPalette
                   skills={employeeSkills}
                   quick={quickSkills}
+                  hideQuick={(messages ?? []).length > 0 || Boolean(pending)}
                   disabled={!workspace}
                   pending={busy}
                   onRun={(skill, values) => {
@@ -788,10 +790,12 @@ function ChatPage() {
                   )}
                 </button>
               </div>
-              <p className="px-3 pb-1 pt-1.5 text-[0.65rem] text-muted-foreground">
-                Enter للإرسال · Shift+Enter لسطر جديد ·{" "}
-                <Sparkles className="inline size-3 text-primary" /> يقرأ من عقل علامتك
-              </p>
+              {draft.trim().length === 0 ? (
+                <p className="px-3 pb-1 pt-1.5 text-[0.65rem] text-muted-foreground">
+                  Enter للإرسال · Shift+Enter لسطر جديد ·{" "}
+                  <Sparkles className="inline size-3 text-primary" /> يقرأ من عقل علامتك
+                </p>
+              ) : null}
             </form>
           </div>
         </div>
@@ -799,7 +803,7 @@ function ChatPage() {
         <aside
           className={cn(
             "border-s border-border bg-card p-5 lg:sticky lg:top-[5.3rem] lg:h-[calc(100dvh-5.3rem)] lg:overflow-y-auto",
-            showSettings ? "block" : "hidden lg:block",
+            showSettings ? "block" : "hidden",
           )}
         >
           <div className="mb-6 border-b border-border pb-5">
