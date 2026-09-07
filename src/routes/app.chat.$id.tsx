@@ -739,14 +739,15 @@ function ChatPage() {
             <div ref={endRef} />
           </div>
 
-          <div className="sticky bottom-0 border-t border-border bg-background/85 p-4 backdrop-blur-xl sm:p-5">
+          <div className="pointer-events-none sticky bottom-0 z-20 p-3 sm:p-4">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 submit(draft);
               }}
-              className="mx-auto max-w-3xl rounded-3xl border border-border bg-card p-2 shadow-card transition-all focus-within:border-primary focus-within:shadow-lift focus-within:ring-4 focus-within:ring-primary/10"
+              className="pointer-events-auto mx-auto max-w-3xl rounded-3xl border border-border/70 bg-card/70 p-2 shadow-lift backdrop-blur-2xl transition-all focus-within:border-primary focus-within:bg-card/90 focus-within:ring-4 focus-within:ring-primary/10"
             >
+
               <textarea
                 ref={inputRef}
                 value={draft}
@@ -801,12 +802,8 @@ function ChatPage() {
                   )}
                 </button>
               </div>
-              {draft.trim().length === 0 ? (
-                <p className="px-3 pb-1 pt-1.5 text-[0.65rem] text-muted-foreground">
-                  Enter للإرسال · Shift+Enter لسطر جديد ·{" "}
-                  <Sparkles className="inline size-3 text-primary" /> يقرأ من عقل علامتك
-                </p>
-              ) : null}
+
+
             </form>
           </div>
         </div>
