@@ -63,7 +63,7 @@ export function MetaDirect({
   const [text, setText] = useState("مرحباً من سِراج — منشور تجريبي عبر النشر المباشر على ميتا.");
   const [imageUrl, setImageUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
-  const [target, setTarget] = useState<"facebook" | "instagram">("facebook");
+  const [target, setTarget] = useState<"facebook" | "instagram">(only ?? "facebook");
 
   const refresh = useCallback(async () => {
     if (!workspaceId) return;
