@@ -47,6 +47,8 @@ export function MetaDirect({ workspaceId }: { workspaceId: string | undefined })
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<TestResult[]>([]);
+  const [authUrl, setAuthUrl] = useState<string | null>(null);
+
 
   const [text, setText] = useState("مرحباً من سِراج — منشور تجريبي عبر النشر المباشر على ميتا.");
   const [imageUrl, setImageUrl] = useState("");
