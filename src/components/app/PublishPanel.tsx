@@ -300,8 +300,30 @@ export function PublishPanel({ workspaceId, employeeId, taskId, channel, request
       on ? "border-foreground bg-foreground text-background" : "border-border hover:bg-secondary"
     }`;
 
+  // النشر اختيار المستخدم وحده: نعرض زراً هادئاً، ولا تفتح اللوحة إلا بطلبه.
+  if (!open) {
+    return (
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-xs font-bold hover:bg-secondary"
+        >
+          <Send className="size-3.5" /> انشر هذا المنشور
+        </button>
+        <span className="text-[11px] text-muted-foreground">اختياري — أنت تختار المنصة واليوم والساعة.</span>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-4 rounded-2xl border border-border bg-secondary/30 p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-xs font-bold text-muted-foreground">خيارات النشر</span>
+        <button type="button" onClick={() => setOpen(false)} className="text-xs font-bold text-muted-foreground hover:underline">
+          إخفاء
+        </button>
+      </div>
       {/* المنصات: كل منصات النشر المدعومة كخيارات — والمطلوب صراحةً مُبرَز */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-bold text-muted-foreground">انشر على</span>
