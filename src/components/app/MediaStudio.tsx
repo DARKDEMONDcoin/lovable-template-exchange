@@ -135,7 +135,7 @@ export function MediaStudio({
             </span>
           ) : null}
         </button>
-        <div className="flex items-center gap-1 rounded-2xl border border-border p-0.5">
+        <div className={cn("items-center gap-1 rounded-2xl border border-border p-0.5", open ? "flex" : "hidden")}>
           {MODES.map((m) => (
             <button
               key={m.id}
