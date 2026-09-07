@@ -2,10 +2,8 @@
  * مكتبة صور العلامة: نلتقط الصور الحقيقية من موقع المستخدم (وصفحاته الداخلية)
  * ثم نرشّح أنسبها لطلبه فيقترحها الموظف داخل الرد نفسه.
  *
- * مبني على مكتبة cheerio مفتوحة المصدر (MIT) لتحليل HTML.
+ * تحليل HTML بلا مكتبات خارجية ليعمل داخل بيئة الخادم الحافّية.
  */
-import * as cheerio from "cheerio";
-
 export type SiteAsset = {
   url: string;
   alt: string;
@@ -84,8 +82,6 @@ function allTags(html: string, name: string): Record<string, string>[] {
 }
 
 function metaContent(html: string, key: "property" | "name" | "rel", value: string): string | undefined {
-  const tag = name === "" ? undefined : undefined;
-  void tag;
   const list = key === "rel" ? allTags(html, "link") : allTags(html, "meta");
   const hit = list.find((a) => (a[key] ?? "").toLowerCase() === value.toLowerCase());
   return hit?.["content"] ?? hit?.["href"];
