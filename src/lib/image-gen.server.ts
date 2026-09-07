@@ -194,22 +194,28 @@ export async function generateImageBytes(
 /** احتياطي: توليد الصورة عبر Gemini image بمفتاح Google AI Studio المخزَّن في Supabase. */
 async function geminiImage(
   prompt: string,
+  opts: ImageOptions = {},
 ): Promise<{ bytes: Uint8Array; contentType: string; url: string } | null> {
   try {
     const { providerKeys } = await import("./provider-keys.server");
     const { gemini } = await providerKeys();
     if (!gemini) return null;
+    // Gemini لا يأخذ أبعاداً رقمية، فنمرّر النسبة نصّياً حتى لا تخرج الصورة بقصّ خاطئ.
+    const w = opts.width ?? 1216;
+    const h = opts.height ?? 640;
+    const ratio = w === h ? "1:1 square" : w > h ? "16:9 landscape" : h / w > 1.6 ? "9:16 vertical story" : "4:5 portrait";
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${gemini}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          contents: [{ role: "user", parts: [{ text: `${prompt} Aspect ratio: ${ratio}.` }] }],
           generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
         }),
       },
     );
+
     if (!res.ok) return null;
     const json = (await res.json()) as {
       candidates?: { content?: { parts?: { inlineData?: { data?: string; mimeType?: string } }[] } }[];
