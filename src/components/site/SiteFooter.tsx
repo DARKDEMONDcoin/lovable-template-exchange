@@ -37,12 +37,17 @@ const cols: { t: string; l: { label: string; to: string }[] }[] = [
     t: "قانوني وأمان",
     l: [
       { label: "الأمان", to: "/security" },
-      { label: "الخصوصية", to: "/privacy" },
-      { label: "الشروط", to: "/terms" },
-      { label: "جرّب الموظفين", to: "/app" },
+      { label: "سياسة الخصوصية", to: "/privacy" },
+      { label: "شروط الاستخدام", to: "/terms" },
+      { label: "ملفات الارتباط", to: "/cookies" },
+      { label: "الاستخدام المقبول", to: "/acceptable-use" },
+      { label: "معالجة البيانات (DPA)", to: "/dpa" },
+      { label: "المعالِجون الفرعيون", to: "/subprocessors" },
+      { label: "الاشتراك والاسترداد", to: "/refunds" },
     ],
   },
 ];
+
 
 
 const integrations = ["instagram", "linkedin", "x", "tiktok", "gmail", "slack", "notion", "shopify"];

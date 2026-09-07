@@ -11,10 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AcceptableUseRouteImport } from './routes/acceptable-use'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as DpaRouteImport } from './routes/dpa'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
@@ -22,9 +25,11 @@ import { Route as IntegrationsRouteImport } from './routes/integrations'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as RefundsRouteImport } from './routes/refunds'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StoriesRouteImport } from './routes/stories'
+import { Route as SubprocessorsRouteImport } from './routes/subprocessors'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppApprovalsRouteImport } from './routes/app.approvals'
@@ -65,6 +70,11 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AcceptableUseRoute = AcceptableUseRouteImport.update({
+  id: '/acceptable-use',
+  path: '/acceptable-use',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -80,9 +90,19 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CookiesRoute = CookiesRouteImport.update({
+  id: '/cookies',
+  path: '/cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DpaRoute = DpaRouteImport.update({
+  id: '/dpa',
+  path: '/dpa',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FaqRoute = FaqRouteImport.update({
@@ -120,6 +140,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RefundsRoute = RefundsRouteImport.update({
+  id: '/refunds',
+  path: '/refunds',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SecurityRoute = SecurityRouteImport.update({
   id: '/security',
   path: '/security',
@@ -133,6 +158,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const StoriesRoute = StoriesRouteImport.update({
   id: '/stories',
   path: '/stories',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SubprocessorsRoute = SubprocessorsRouteImport.update({
+  id: '/subprocessors',
+  path: '/subprocessors',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -288,10 +318,13 @@ const ApiPublicMetaCallbackRoute = ApiPublicMetaCallbackRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/acceptable-use': typeof AcceptableUseRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
   '/dashboard': typeof DashboardRoute
+  '/dpa': typeof DpaRoute
   '/faq': typeof FaqRoute
   '/features': typeof FeaturesRoute
   '/how-it-works': typeof HowItWorksRoute
@@ -299,9 +332,11 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/refunds': typeof RefundsRoute
   '/security': typeof SecurityRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRoute
+  '/subprocessors': typeof SubprocessorsRoute
   '/terms': typeof TermsRoute
   '/app/approvals': typeof AppApprovalsRoute
   '/app/automations': typeof AppAutomationsRoute
@@ -335,9 +370,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/acceptable-use': typeof AcceptableUseRoute
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
   '/dashboard': typeof DashboardRoute
+  '/dpa': typeof DpaRoute
   '/faq': typeof FaqRoute
   '/features': typeof FeaturesRoute
   '/how-it-works': typeof HowItWorksRoute
@@ -345,9 +383,11 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/refunds': typeof RefundsRoute
   '/security': typeof SecurityRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRoute
+  '/subprocessors': typeof SubprocessorsRoute
   '/terms': typeof TermsRoute
   '/app/approvals': typeof AppApprovalsRoute
   '/app/automations': typeof AppAutomationsRoute
@@ -382,10 +422,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/acceptable-use': typeof AcceptableUseRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
   '/dashboard': typeof DashboardRoute
+  '/dpa': typeof DpaRoute
   '/faq': typeof FaqRoute
   '/features': typeof FeaturesRoute
   '/how-it-works': typeof HowItWorksRoute
@@ -393,9 +436,11 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/refunds': typeof RefundsRoute
   '/security': typeof SecurityRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRoute
+  '/subprocessors': typeof SubprocessorsRoute
   '/terms': typeof TermsRoute
   '/app/approvals': typeof AppApprovalsRoute
   '/app/automations': typeof AppAutomationsRoute
@@ -431,10 +476,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/acceptable-use'
     | '/app'
     | '/auth'
     | '/contact'
+    | '/cookies'
     | '/dashboard'
+    | '/dpa'
     | '/faq'
     | '/features'
     | '/how-it-works'
@@ -442,9 +490,11 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/pricing'
     | '/privacy'
+    | '/refunds'
     | '/security'
     | '/sitemap.xml'
     | '/stories'
+    | '/subprocessors'
     | '/terms'
     | '/app/approvals'
     | '/app/automations'
@@ -478,9 +528,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/acceptable-use'
     | '/auth'
     | '/contact'
+    | '/cookies'
     | '/dashboard'
+    | '/dpa'
     | '/faq'
     | '/features'
     | '/how-it-works'
@@ -488,9 +541,11 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/pricing'
     | '/privacy'
+    | '/refunds'
     | '/security'
     | '/sitemap.xml'
     | '/stories'
+    | '/subprocessors'
     | '/terms'
     | '/app/approvals'
     | '/app/automations'
@@ -524,10 +579,13 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
+    | '/acceptable-use'
     | '/app'
     | '/auth'
     | '/contact'
+    | '/cookies'
     | '/dashboard'
+    | '/dpa'
     | '/faq'
     | '/features'
     | '/how-it-works'
@@ -535,9 +593,11 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/pricing'
     | '/privacy'
+    | '/refunds'
     | '/security'
     | '/sitemap.xml'
     | '/stories'
+    | '/subprocessors'
     | '/terms'
     | '/app/approvals'
     | '/app/automations'
@@ -572,10 +632,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  AcceptableUseRoute: typeof AcceptableUseRoute
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
   ContactRoute: typeof ContactRoute
+  CookiesRoute: typeof CookiesRoute
   DashboardRoute: typeof DashboardRoute
+  DpaRoute: typeof DpaRoute
   FaqRoute: typeof FaqRoute
   FeaturesRoute: typeof FeaturesRoute
   HowItWorksRoute: typeof HowItWorksRoute
@@ -583,9 +646,11 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
+  RefundsRoute: typeof RefundsRoute
   SecurityRoute: typeof SecurityRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StoriesRoute: typeof StoriesRoute
+  SubprocessorsRoute: typeof SubprocessorsRoute
   TermsRoute: typeof TermsRoute
   BlogSlugRoute: typeof BlogSlugRoute
   EmployeesIdRoute: typeof EmployeesIdRoute
@@ -618,6 +683,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/acceptable-use': {
+      id: '/acceptable-use'
+      path: '/acceptable-use'
+      fullPath: '/acceptable-use'
+      preLoaderRoute: typeof AcceptableUseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app': {
       id: '/app'
       path: '/app'
@@ -639,11 +711,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cookies': {
+      id: '/cookies'
+      path: '/cookies'
+      fullPath: '/cookies'
+      preLoaderRoute: typeof CookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dpa': {
+      id: '/dpa'
+      path: '/dpa'
+      fullPath: '/dpa'
+      preLoaderRoute: typeof DpaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faq': {
@@ -695,6 +781,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/refunds': {
+      id: '/refunds'
+      path: '/refunds'
+      fullPath: '/refunds'
+      preLoaderRoute: typeof RefundsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/security': {
       id: '/security'
       path: '/security'
@@ -714,6 +807,13 @@ declare module '@tanstack/react-router' {
       path: '/stories'
       fullPath: '/stories'
       preLoaderRoute: typeof StoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/subprocessors': {
+      id: '/subprocessors'
+      path: '/subprocessors'
+      fullPath: '/subprocessors'
+      preLoaderRoute: typeof SubprocessorsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -963,10 +1063,13 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  AcceptableUseRoute: AcceptableUseRoute,
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
   ContactRoute: ContactRoute,
+  CookiesRoute: CookiesRoute,
   DashboardRoute: DashboardRoute,
+  DpaRoute: DpaRoute,
   FaqRoute: FaqRoute,
   FeaturesRoute: FeaturesRoute,
   HowItWorksRoute: HowItWorksRoute,
@@ -974,9 +1077,11 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
+  RefundsRoute: RefundsRoute,
   SecurityRoute: SecurityRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StoriesRoute: StoriesRoute,
+  SubprocessorsRoute: SubprocessorsRoute,
   TermsRoute: TermsRoute,
   BlogSlugRoute: BlogSlugRoute,
   EmployeesIdRoute: EmployeesIdRoute,
