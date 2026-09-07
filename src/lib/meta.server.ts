@@ -112,9 +112,18 @@ export async function verifyState(
 
 /* --------------------------------- OAuth --------------------------------- */
 
-export function metaRedirectUri(origin: string): string {
-  return `${new URL(origin).origin}/api/public/meta/callback`;
+/**
+ * أصل ثابت لرابط العودة — لأن نطاق المعاينة يتغيّر (lovableproject.com / id-preview)
+ * بينما لوحة ميتا تقبل روابط مسجّلة فقط. نستخدم النطاق الثابت للمشروع دائماً.
+ */
+export const META_CANONICAL_ORIGIN =
+  "https://project--0ce5e558-cbb1-4a64-8022-50705199c70c-dev.lovable.app";
+
+export function metaRedirectUri(_origin?: string): string {
+  const override = process.env["META_REDIRECT_ORIGIN"];
+  return `${new URL(override || META_CANONICAL_ORIGIN).origin}/api/public/meta/callback`;
 }
+
 
 export function metaAuthorizeUrl(config: MetaConfig, redirectUri: string, state: string): string {
   const url = new URL("https://www.facebook.com/v23.0/dialog/oauth");
