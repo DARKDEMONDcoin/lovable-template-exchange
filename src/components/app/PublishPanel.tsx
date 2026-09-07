@@ -241,16 +241,8 @@ export function PublishPanel({ workspaceId, employeeId, taskId, channel, request
     );
   }
 
-  if (!connected.length) {
-    return (
-      <ConnectNow
-        workspaceId={workspaceId}
-        provider={requested[0] ?? "facebook"}
-        label={requested[0] ? `اربط ${providerLabel(requested[0])} وانشر` : "اربط حسابك للنشر المباشر"}
-        publishAfterConnect={Boolean(requested[0])}
-      />
-    );
-  }
+
+
 
   const chipClass = (on: boolean) =>
     `inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
