@@ -18,6 +18,13 @@ export type ImageOptions = {
   timeoutMs?: number;
 };
 
+/** كلمات جودة تُضاف مرة واحدة فقط عندما لا يذكرها الوصف — ترفع حِدّة الصورة وواقعيتها. */
+function withQuality(prompt: string): string {
+  const p = prompt.trim();
+  if (/\b(8k|4k|photorealistic|high detail|ultra detailed|cinematic)\b/i.test(p)) return p;
+  return `${p} Photorealistic, ultra detailed, sharp focus, natural lighting, professional commercial photography, 8k.`;
+}
+
 /** رابط صورة جاهز للاستخدام مباشرة داخل Markdown/HTML — لا يحتاج انتظار توليد. */
 export function imageUrl(prompt: string, opts: ImageOptions = {}): string {
   const { width = 1216, height = 640, seed } = opts;
@@ -26,12 +33,15 @@ export function imageUrl(prompt: string, opts: ImageOptions = {}): string {
     height: String(height),
     model: "flux",
     nologo: "true",
+    // لا تُنشر الصورة في الخلاصة العامة للمزوّد — خصوصية محتوى العميل.
+    nofeed: "true",
     // لا «تحسين» تلقائي للوصف: كان يبدّل الموضوع ويعطي صوراً لا علاقة لها بالطلب.
     enhance: "false",
     ...(seed !== undefined ? { seed: String(seed) } : {}),
   });
-  return `${POLLINATIONS}/${encodeURIComponent(prompt.slice(0, 900))}?${q}`;
+  return `${POLLINATIONS}/${encodeURIComponent(withQuality(prompt).slice(0, 900))}?${q}`;
 }
+
 
 export type ImageBriefInput = {
   /** طلب المستخدم الأصلي (بالعربية غالباً). */
