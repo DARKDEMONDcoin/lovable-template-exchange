@@ -89,12 +89,24 @@ function SourceCard({
         <p className="text-sm font-black">{label}</p>
         <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{status.message}</p>
         {!ok ? (
-          <Link
-            to="/app/integrations"
-            className="mt-2 inline-flex items-center gap-1 rounded-lg bg-foreground px-3 py-1.5 text-xs font-bold text-background"
-          >
-            {status.state === "error" ? "أعد الربط" : status.state === "not_selected" ? "اختر الموقع/الخاصية" : "اربط الآن"}
-          </Link>
+          onConnect ? (
+            <button
+              type="button"
+              onClick={onConnect}
+              disabled={connecting}
+              className="mt-2 inline-flex items-center gap-1 rounded-lg bg-foreground px-3 py-1.5 text-xs font-bold text-background disabled:opacity-60"
+            >
+              {connecting ? <Loader2 className="size-3.5 animate-spin" /> : null}
+              {status.state === "error" ? "أعد الربط" : status.state === "not_selected" ? "اختر الموقع/الخاصية" : "اربط الآن"}
+            </button>
+          ) : (
+            <Link
+              to="/app/integrations"
+              className="mt-2 inline-flex items-center gap-1 rounded-lg bg-foreground px-3 py-1.5 text-xs font-bold text-background"
+            >
+              {status.state === "error" ? "أعد الربط" : status.state === "not_selected" ? "اختر الموقع/الخاصية" : "اربط الآن"}
+            </Link>
+          )
         ) : null}
       </div>
     </div>
