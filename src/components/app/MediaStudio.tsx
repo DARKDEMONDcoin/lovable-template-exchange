@@ -117,7 +117,7 @@ export function MediaStudio({
   };
 
   return (
-    <div className="w-full">
+    <div className={open ? "w-full" : "min-w-0"}>
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
