@@ -47,6 +47,8 @@ export function MetaDirect({ workspaceId }: { workspaceId: string | undefined })
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<TestResult[]>([]);
+  const [authUrl, setAuthUrl] = useState<string | null>(null);
+
 
   const [text, setText] = useState("مرحباً من سِراج — منشور تجريبي عبر النشر المباشر على ميتا.");
   const [imageUrl, setImageUrl] = useState("");
@@ -85,12 +87,21 @@ export function MetaDirect({ workspaceId }: { workspaceId: string | undefined })
       const res = await connect({
         data: { workspaceId, origin: window.location.origin, returnTo: "/app/integrations" },
       });
-      window.location.assign(res.url);
+      // فيسبوك يرفض الفتح داخل الإطار (معاينة لوفابل) — لذلك نفتح نافذة جديدة دائماً.
+      const win = window.open(res.url, "_blank", "noopener,noreferrer");
+      if (!win) {
+        setAuthUrl(res.url);
+        setError("المتصفح منع فتح النافذة — استخدم الرابط بالأسفل لإتمام الربط.");
+      } else {
+        setAuthUrl(res.url);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "تعذّر بدء ربط ميتا.");
+    } finally {
       setBusy(null);
     }
   };
+
 
   const runTest = async () => {
     if (!workspaceId) return;
@@ -204,6 +215,33 @@ export function MetaDirect({ workspaceId }: { workspaceId: string | undefined })
           {error}
         </p>
       ) : null}
+
+      {authUrl ? (
+        <div className="mt-4 rounded-2xl border border-border bg-secondary/40 px-4 py-3 text-sm">
+          <p className="font-semibold">
+            فيسبوك لا يفتح داخل نافذة المعاينة — أكمل الربط في تبويب خارجي ثم عد واضغط «تحديث».
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <a
+              href={authUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex rounded-full bg-foreground px-4 py-2 text-xs font-bold text-background"
+            >
+              افتح صفحة الموافقة
+            </a>
+            <button
+              type="button"
+              onClick={() => void refresh()}
+              className="inline-flex rounded-full border border-border px-4 py-2 text-xs font-bold"
+            >
+              تحديث الحالة
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+
 
       {connections.length ? (
         <ul className="mt-4 grid gap-2 sm:grid-cols-2">
