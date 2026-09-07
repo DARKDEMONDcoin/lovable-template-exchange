@@ -2,10 +2,8 @@
  * مكتبة صور العلامة: نلتقط الصور الحقيقية من موقع المستخدم (وصفحاته الداخلية)
  * ثم نرشّح أنسبها لطلبه فيقترحها الموظف داخل الرد نفسه.
  *
- * مبني على مكتبة cheerio مفتوحة المصدر (MIT) لتحليل HTML.
+ * تحليل HTML بلا مكتبات خارجية ليعمل داخل بيئة الخادم الحافّية.
  */
-import * as cheerio from "cheerio";
-
 export type SiteAsset = {
   url: string;
   alt: string;
@@ -67,9 +65,37 @@ function bestFromSrcset(srcset: string): string | null {
   return scored[0]!.url;
 }
 
+/** يقرأ خصائص وسم HTML واحد بلا أي مكتبة خارجية (متوافق مع بيئة الحافة). */
+function attrs(tag: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  const re = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'>]+))/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(tag))) {
+    out[m[1]!.toLowerCase()] = (m[3] ?? m[4] ?? m[5] ?? "").trim();
+  }
+  return out;
+}
+
+function allTags(html: string, name: string): Record<string, string>[] {
+  const re = new RegExp(`<${name}\\b[^>]*>`, "gi");
+  return (html.match(re) ?? []).map(attrs);
+}
+
+function metaContent(html: string, key: "property" | "name" | "rel", value: string): string | undefined {
+  const list = key === "rel" ? allTags(html, "link") : allTags(html, "meta");
+  const hit = list.find((a) => (a[key] ?? "").toLowerCase() === value.toLowerCase());
+  return hit?.["content"] ?? hit?.["href"];
+}
+
+function pageTitle(html: string): string {
+  return (html.match(/<title[^>]*>([\s\S]{0,300}?)<\/title>/i)?.[1] ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function collectFromPage(html: string, pageUrl: string): SiteAsset[] {
-  const $ = cheerio.load(html);
   const out: SiteAsset[] = [];
+  const title = pageTitle(html);
   const push = (raw: string | undefined, alt: string, weight: number) => {
     if (!raw) return;
     const abs = (() => {
@@ -80,39 +106,37 @@ function collectFromPage(html: string, pageUrl: string): SiteAsset[] {
       }
     })();
     if (!abs || !/^https?:/i.test(abs)) return;
-    if (abs.startsWith("data:")) return;
     if (/\.svg(\?|$)/i.test(abs)) return;
     if (JUNK.test(abs)) return;
     out.push({ url: abs, alt: alt.trim().slice(0, 200), pageUrl, weight });
   };
 
   // صور المشاركة الاجتماعية: أعلى جودة وأكثرها تمثيلاً للصفحة.
-  push($('meta[property="og:image"]').attr("content"), $("title").text(), 60);
-  push($('meta[name="twitter:image"]').attr("content"), $("title").text(), 55);
-  push($('link[rel="image_src"]').attr("href"), $("title").text(), 40);
+  push(metaContent(html, "property", "og:image"), title, 60);
+  push(metaContent(html, "name", "twitter:image"), title, 55);
+  push(metaContent(html, "rel", "image_src"), title, 40);
 
-  $("img").each((_, el) => {
-    const $el = $(el);
+  for (const a of allTags(html, "img")) {
+    const srcset = a["srcset"] ?? a["data-srcset"];
     const src =
-      $el.attr("src") ??
-      $el.attr("data-src") ??
-      $el.attr("data-lazy-src") ??
-      (($el.attr("srcset") ?? $el.attr("data-srcset")) &&
-        bestFromSrcset($el.attr("srcset") ?? $el.attr("data-srcset")!)) ??
-      undefined;
-    const alt = $el.attr("alt") ?? $el.attr("title") ?? "";
-    const w = Number($el.attr("width") ?? 0);
-    const h = Number($el.attr("height") ?? 0);
-    if ((w && w < 200) || (h && h < 200)) return;
-    // صور داخل المقالات/المنتجات أهم من صور الترويسة والتذييل.
-    const inMain = $el.closest("article, main, .product, .entry-content, section").length > 0;
-    push(src, alt, (alt ? 18 : 8) + (inMain ? 10 : 0));
-  });
+      a["src"] ??
+      a["data-src"] ??
+      a["data-lazy-src"] ??
+      (srcset ? (bestFromSrcset(srcset) ?? undefined) : undefined);
+    const alt = a["alt"] ?? a["title"] ?? "";
+    const w = Number(a["width"] ?? 0);
+    const h = Number(a["height"] ?? 0);
+    if ((w && w < 200) || (h && h < 200)) continue;
+    push(src, alt, alt ? 18 : 8);
+  }
 
   // صور منظمة داخل بيانات JSON-LD (منتجات، مقالات).
-  $('script[type="application/ld+json"]').each((_, el) => {
-    const text = $(el).contents().text();
-    if (!text || text.length > 200_000) return;
+  const ld = html.match(
+    /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
+  );
+  for (const block of ld ?? []) {
+    const text = block.replace(/^[\s\S]*?>/, "").replace(/<\/script>$/i, "");
+    if (!text || text.length > 200_000) continue;
     try {
       const json: unknown = JSON.parse(text);
       const walk = (n: unknown, depth = 0) => {
@@ -121,48 +145,48 @@ function collectFromPage(html: string, pageUrl: string): SiteAsset[] {
         if (typeof n !== "object") return;
         const o = n as Record<string, unknown>;
         const img = o["image"];
-        const name = typeof o["name"] === "string" ? (o["name"] as string) : "";
-        if (typeof img === "string") push(img, name, 45);
-        if (Array.isArray(img)) img.forEach((x) => typeof x === "string" && push(x, name, 45));
+        const nm = typeof o["name"] === "string" ? (o["name"] as string) : "";
+        if (typeof img === "string") push(img, nm, 45);
+        if (Array.isArray(img)) img.forEach((x) => typeof x === "string" && push(x, nm, 45));
         if (img && typeof img === "object" && typeof (img as { url?: string }).url === "string")
-          push((img as { url: string }).url, name, 45);
+          push((img as { url: string }).url, nm, 45);
         Object.values(o).forEach((v) => walk(v, depth + 1));
       };
       walk(json);
     } catch {
       /* تجاهل JSON التالف */
     }
-  });
+  }
 
   return out;
 }
 
 function internalLinks(html: string, baseUrl: string, limit: number): string[] {
-  const $ = cheerio.load(html);
   const base = new URL(baseUrl);
   const seen = new Set<string>();
   const good: string[] = [];
   const preferred = /(product|shop|store|menu|blog|news|service|gallery|work|portfolio|about|منتج|متجر|مدونة|خدمات|أعمال)/i;
-  $("a[href]").each((_, el) => {
-    const href = $(el).attr("href");
-    if (!href || href.startsWith("#")) return;
+  for (const a of allTags(html, "a")) {
+    const href = a["href"];
+    if (!href || href.startsWith("#")) continue;
     let u: URL;
     try {
       u = new URL(href, baseUrl);
     } catch {
-      return;
+      continue;
     }
-    if (u.hostname !== base.hostname) return;
-    if (/\.(pdf|jpg|png|zip|mp4|webp)$/i.test(u.pathname)) return;
+    if (u.hostname !== base.hostname) continue;
+    if (/\.(pdf|jpg|png|zip|mp4|webp)$/i.test(u.pathname)) continue;
     u.hash = "";
     const key = u.toString();
-    if (seen.has(key) || key === baseUrl) return;
+    if (seen.has(key) || key === baseUrl) continue;
     seen.add(key);
     if (preferred.test(u.pathname)) good.unshift(key);
     else good.push(key);
-  });
+  }
   return good.slice(0, limit);
 }
+
 
 /** يجمع صور الموقع من الصفحة الرئيسية وحتى 5 صفحات داخلية مهمة. */
 export async function harvestSiteImages(rawUrl: string, maxPages = 6): Promise<SiteAsset[]> {
