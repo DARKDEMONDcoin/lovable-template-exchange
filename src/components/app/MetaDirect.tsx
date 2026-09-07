@@ -174,20 +174,25 @@ export function MetaDirect({
 
   const facebookPages = connections.filter((c) => c.kind === "facebook");
   const igAccounts = connections.filter((c) => c.kind === "instagram");
+  const shown = only ? connections.filter((c) => c.kind === only) : connections;
 
   return (
-    <section className="mb-6 rounded-3xl border border-border bg-card p-6">
+    <section className={bare ? "" : "mb-6 rounded-3xl border border-border bg-card p-6"}>
       <header className="flex flex-wrap items-center gap-3">
-        <AppIcon name="facebook" className="size-7" />
-        <AppIcon name="instagram" className="size-7" />
-        <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-black">النشر المباشر على ميتا</h2>
-          <p className="text-sm text-ink-soft">
-            ربط صفحات فيسبوك وحسابات إنستجرام بتطبيق ميتا الخاص بنا — أذونات نشر كاملة وتوكنات
-            طويلة المدى محفوظة على الخادم فقط.
-          </p>
-        </div>
-        <div className="flex shrink-0 gap-2">
+        {bare ? null : (
+          <>
+            <AppIcon name="facebook" className="size-7" />
+            <AppIcon name="instagram" className="size-7" />
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg font-black">النشر المباشر على ميتا</h2>
+              <p className="text-sm text-ink-soft">
+                ربط صفحات فيسبوك وحسابات إنستجرام بتطبيق ميتا الخاص بنا — أذونات نشر كاملة وتوكنات
+                طويلة المدى محفوظة على الخادم فقط.
+              </p>
+            </div>
+          </>
+        )}
+        <div className="flex shrink-0 flex-wrap gap-2">
           <button
             type="button"
             onClick={() => void startConnect()}
