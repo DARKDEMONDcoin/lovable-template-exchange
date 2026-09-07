@@ -18,6 +18,13 @@ export type ImageOptions = {
   timeoutMs?: number;
 };
 
+/** كلمات جودة تُضاف مرة واحدة فقط عندما لا يذكرها الوصف — ترفع حِدّة الصورة وواقعيتها. */
+function withQuality(prompt: string): string {
+  const p = prompt.trim();
+  if (/\b(8k|4k|photorealistic|high detail|ultra detailed|cinematic)\b/i.test(p)) return p;
+  return `${p} Photorealistic, ultra detailed, sharp focus, natural lighting, professional commercial photography, 8k.`;
+}
+
 /** رابط صورة جاهز للاستخدام مباشرة داخل Markdown/HTML — لا يحتاج انتظار توليد. */
 export function imageUrl(prompt: string, opts: ImageOptions = {}): string {
   const { width = 1216, height = 640, seed } = opts;
@@ -26,12 +33,15 @@ export function imageUrl(prompt: string, opts: ImageOptions = {}): string {
     height: String(height),
     model: "flux",
     nologo: "true",
+    // لا تُنشر الصورة في الخلاصة العامة للمزوّد — خصوصية محتوى العميل.
+    nofeed: "true",
     // لا «تحسين» تلقائي للوصف: كان يبدّل الموضوع ويعطي صوراً لا علاقة لها بالطلب.
     enhance: "false",
     ...(seed !== undefined ? { seed: String(seed) } : {}),
   });
-  return `${POLLINATIONS}/${encodeURIComponent(prompt.slice(0, 900))}?${q}`;
+  return `${POLLINATIONS}/${encodeURIComponent(withQuality(prompt).slice(0, 900))}?${q}`;
 }
+
 
 export type ImageBriefInput = {
   /** طلب المستخدم الأصلي (بالعربية غالباً). */
@@ -165,12 +175,17 @@ export async function generateImageBytes(
         return { bytes: buf, contentType: res.headers.get("content-type") ?? "image/jpeg", url };
       } catch (error) {
         console.error(`[nour] pollinations attempt ${attempt + 1} failed:`, error);
+        // بعد محاولتين فاشلتين نجرّب Gemini فوراً بدل انتظار كل المحاولات.
+        if (attempt === 1) {
+          const early = await geminiImage(withQuality(prompt), opts);
+          if (early) return early;
+        }
         if (attempt < 3) await new Promise((r) => setTimeout(r, 2000 * 2 ** attempt + Math.random() * 900));
       } finally {
         clearTimeout(timer);
       }
     }
-    return geminiImage(prompt);
+    return geminiImage(withQuality(prompt), opts);
   });
 }
 
@@ -179,22 +194,28 @@ export async function generateImageBytes(
 /** احتياطي: توليد الصورة عبر Gemini image بمفتاح Google AI Studio المخزَّن في Supabase. */
 async function geminiImage(
   prompt: string,
+  opts: ImageOptions = {},
 ): Promise<{ bytes: Uint8Array; contentType: string; url: string } | null> {
   try {
     const { providerKeys } = await import("./provider-keys.server");
     const { gemini } = await providerKeys();
     if (!gemini) return null;
+    // Gemini لا يأخذ أبعاداً رقمية، فنمرّر النسبة نصّياً حتى لا تخرج الصورة بقصّ خاطئ.
+    const w = opts.width ?? 1216;
+    const h = opts.height ?? 640;
+    const ratio = w === h ? "1:1 square" : w > h ? "16:9 landscape" : h / w > 1.6 ? "9:16 vertical story" : "4:5 portrait";
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${gemini}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          contents: [{ role: "user", parts: [{ text: `${prompt} Aspect ratio: ${ratio}.` }] }],
           generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
         }),
       },
     );
+
     if (!res.ok) return null;
     const json = (await res.json()) as {
       candidates?: { content?: { parts?: { inlineData?: { data?: string; mimeType?: string } }[] } }[];

@@ -463,10 +463,12 @@ async function serpSearchOnce(query: string, allowWiki = true): Promise<SerpResu
       rank: i + 1,
     }));
 
+  const settled: SerpResult[][] = [];
   const race = attempts.map(async (attempt, i) => {
     try {
       const rows = clean(await attempt());
       if (!rows.length) throw new Error("empty");
+      settled.push(rows);
       return rows;
     } catch (error) {
       if (process.env["NOUR_DEBUG_SERP"]) {
@@ -476,10 +478,44 @@ async function serpSearchOnce(query: string, allowWiki = true): Promise<SerpResu
     }
   });
 
+  /**
+   * دمج نتائج عدة محركات بترتيب متبادل (RRF): الرابط الذي يظهر في أكثر من محرك
+   * يصعد للأعلى، والمقتطفات تُكمَّل من أي محرك يوفّرها — تغطية أوسع وأدق من
+   * الاكتفاء بأول محرك يرد.
+   */
+  const fuse = (sets: SerpResult[][]): SerpResult[] => {
+    const byUrl = new Map<string, { row: SerpResult; score: number; engines: number }>();
+    for (const set of sets) {
+      for (const [i, row] of set.entries()) {
+        const key = row.url.replace(/[#?].*$/, "").replace(/\/$/, "");
+        const prev = byUrl.get(key);
+        const gain = 1 / (10 + i);
+        if (prev) {
+          prev.score += gain;
+          prev.engines += 1;
+          if (!prev.row.snippet && row.snippet) prev.row.snippet = row.snippet;
+          if (row.title.length > prev.row.title.length) prev.row.title = row.title;
+        } else {
+          byUrl.set(key, { row: { ...row }, score: gain, engines: 1 });
+        }
+      }
+    }
+    return [...byUrl.values()]
+      .sort((a, b) => b.engines - a.engines || b.score - a.score)
+      .slice(0, 12)
+      .map((v, i) => ({ ...v.row, rank: i + 1 }));
+  };
+
   try {
-    const rows = await withBudget(Promise.any(race), 13_000, [] as SerpResult[]);
-    if (rows.length) return rows;
+    const first = await withBudget(Promise.any(race), 13_000, [] as SerpResult[]);
+    if (first.length) {
+      // نافذة قصيرة نلتقط فيها ما ينهيه بقية المحركات ثم ندمج — بلا تأخير محسوس.
+      await withBudget(Promise.allSettled(race).then(() => undefined), 2_500, undefined);
+      const fused = fuse(settled.length ? settled : [first]);
+      return fused.length ? fused : first;
+    }
   } catch {
+
     // كل المحركات فشلت — ننتقل للملاذ الأخير
   }
   if (!allowWiki) return [];
