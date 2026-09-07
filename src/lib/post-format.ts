@@ -53,6 +53,30 @@ export function sanitizePostBody(input: string | null | undefined): string {
     .trim();
 }
 
+/**
+ * هل الرد مجرد كلام موظف (اعتذار/رفض/سؤال/توضيح) وليس منشوراً؟
+ * يُستخدم لمنع ظهور لوحة النشر بنص ليس منشوراً أصلاً.
+ */
+const REFUSAL = [
+  /لا\s+(?:يمكنني|أستطيع|أقدر)/u,
+  /لست\s+قادراً/u,
+  /خارج\s+نطاق/u,
+  /عذرا?ً?[،,]/u,
+  /آسف/u,
+  /هل\s+تريد(?:ني)?\s+أن/u,
+  /وضّح\s+لي/u,
+  /أحتاج\s+منك/u,
+];
+
+export function isNonPostReply(input: string | null | undefined): boolean {
+  const text = sanitizePostBody(input);
+  if (!text) return true;
+  const head = text.split("\n").slice(0, 6).join("\n");
+  return REFUSAL.some((re) => re.test(head));
+}
+
+
+
 /** نسخة مختصرة تناسب حدّ إكس (٢٨٠ حرفاً) وتنتهي عند جملة كاملة مع أهم هاشتاقين. */
 export function shortForX(caption: string): string {
   const tags = (caption.match(/#[\p{L}\p{N}_]+/gu) ?? []).slice(0, 2).join(" ");
