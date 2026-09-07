@@ -129,13 +129,18 @@ export function MediaStudio({
           )}
         >
           <ImagePlus className="size-4" /> وسائط
+          {!open && imageMode !== "auto" ? (
+            <span className="text-[0.65rem] font-semibold text-muted-foreground">
+              {imageMode === "off" ? "بدون صورة" : "وصفي أنا"}
+            </span>
+          ) : null}
           {attachments.length ? (
             <span className="rounded-full bg-foreground px-1.5 text-[0.65rem] text-background">
               {attachments.length}
             </span>
           ) : null}
         </button>
-        <div className="flex items-center gap-1 rounded-2xl border border-border p-0.5">
+        <div className={cn("items-center gap-1 rounded-2xl border border-border p-0.5", open ? "flex" : "hidden")}>
           {MODES.map((m) => (
             <button
               key={m.id}

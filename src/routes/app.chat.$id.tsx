@@ -17,6 +17,8 @@ import { Markdown } from "@/components/app/Markdown";
 import { PublishPanel } from "@/components/app/PublishPanel";
 import { requestedPublishTargets } from "@/lib/platforms";
 import { isNonPostReply } from "@/lib/post-format";
+import { detectHandoff } from "@/lib/handoff";
+import { HandoffCard } from "@/components/app/HandoffCard";
 import { PublishToWordPress } from "@/components/app/PublishToWordPress";
 import { ActionPanel } from "@/components/app/ActionPanel";
 import { Portrait } from "@/components/site/Portrait";
@@ -611,6 +613,16 @@ function ChatPage() {
                           body={m.body}
                         />
                       ) : null}
+
+                      {!isUser
+                        ? (() => {
+                            const req = lastUserBefore(arr, idx);
+                            const handoff = detectHandoff(req, id);
+                            return handoff ? (
+                              <HandoffCard handoff={handoff} request={req} currentName={member.name} />
+                            ) : null;
+                          })()
+                        : null}
 
                       <div
                         className={cn(
