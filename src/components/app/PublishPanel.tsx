@@ -496,7 +496,9 @@ export function PublishPanel({ workspaceId, employeeId, taskId, channel, request
             </button>
           ) : null}
         </div>
+        {bestTimes ? <p className="mt-2 text-[11px] text-muted-foreground">{bestTimes.note}</p> : null}
       </div>
+
 
       {/* الإجراءات */}
       <div className="mt-4 flex flex-wrap items-center gap-2">
