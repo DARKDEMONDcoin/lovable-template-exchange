@@ -49,6 +49,9 @@ const realProviders = new Set([
   "ghost",
 ]);
 
+/** فيسبوك وإنستجرام لهما لوحة ربط مباشرة مستقلة لكل منهما. */
+const isMeta = (provider: string) => provider === "facebook" || provider === "instagram";
+
 const gscMessages: Record<string, string> = {
   denied: "أُلغيت موافقة Google — لم يتم الربط.",
   token_failed: "تعذّر إكمال الربط مع Google، جرّب مرة أخرى.",
