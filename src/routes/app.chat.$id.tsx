@@ -503,6 +503,7 @@ function ChatPage() {
         >
           <PanelRight className="size-4.5" />
         </button>
+        </>
       }
     >
       <div className={cn("grid", showSettings && "lg:grid-cols-[minmax(0,1fr)_20rem]")}>
