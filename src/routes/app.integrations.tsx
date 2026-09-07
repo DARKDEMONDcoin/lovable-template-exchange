@@ -290,8 +290,6 @@ function IntegrationsPage() {
       ) : null}
 
 
-      <MetaDirect workspaceId={workspace?.id} />
-
       {error ? (
         <p className="mb-6 rounded-2xl bg-coral/12 px-4 py-3 text-sm font-semibold text-coral">
           {error}
