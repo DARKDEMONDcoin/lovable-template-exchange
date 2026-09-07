@@ -762,7 +762,7 @@ function ChatPage() {
                 dir="auto"
                 className="max-h-40 min-h-11 w-full resize-none bg-transparent px-3 py-2.5 outline-none placeholder:text-muted-foreground/80"
               />
-              <div className="px-1 pb-1">
+              <div className="flex items-center gap-2 px-1 pb-0.5">
                 <MediaStudio
                   workspaceId={workspace?.id}
                   attachments={attachments}
@@ -775,9 +775,6 @@ function ChatPage() {
                   onAspectChange={setAspect}
                   disabled={busy}
                 />
-              </div>
-              <div className="flex items-center gap-2 px-1 pb-0.5">
-
                 <SkillPalette
                   skills={employeeSkills}
                   quick={quickSkills}
