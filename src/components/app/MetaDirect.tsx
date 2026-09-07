@@ -216,6 +216,33 @@ export function MetaDirect({ workspaceId }: { workspaceId: string | undefined })
         </p>
       ) : null}
 
+      {authUrl ? (
+        <div className="mt-4 rounded-2xl border border-border bg-secondary/40 px-4 py-3 text-sm">
+          <p className="font-semibold">
+            فيسبوك لا يفتح داخل نافذة المعاينة — أكمل الربط في تبويب خارجي ثم عد واضغط «تحديث».
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <a
+              href={authUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex rounded-full bg-foreground px-4 py-2 text-xs font-bold text-background"
+            >
+              افتح صفحة الموافقة
+            </a>
+            <button
+              type="button"
+              onClick={() => void refresh()}
+              className="inline-flex rounded-full border border-border px-4 py-2 text-xs font-bold"
+            >
+              تحديث الحالة
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+
+
       {connections.length ? (
         <ul className="mt-4 grid gap-2 sm:grid-cols-2">
           {connections.map((c) => (
