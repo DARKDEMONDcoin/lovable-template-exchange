@@ -206,20 +206,18 @@ export async function computeBestTimes(
     }
   }
 
-  // ٣) متوسطات عامة — مؤقتاً حتى يتكوّن سجلّك.
-  const seen = new Set<string>();
-  const slots: BestTimeSlot[] = [];
+  // ٣) متوسطات عامة — مؤقتاً حتى يتكوّن سجلّك (تُطبَّق بساعات المستخدم المحلية).
+  const hours = new Set<number>();
   let cursor = now;
-  while (slots.length < 3) {
+  while (hours.size < 3) {
     const at = bestTimeFor(provider, cursor);
-    const l = local(at, offsetMin);
-    const key = at.toISOString();
-    if (!seen.has(key)) {
-      seen.add(key);
-      slots.push({ at: key, hour: l.hour, weekday: l.weekday, score: 0 });
-    }
+    hours.add(at.getHours());
     cursor = new Date(at.getTime() + 60_000);
   }
+  const slots: BestTimeSlot[] = [...hours].map((hour) => {
+    const at = nextAt(hour, null, offsetMin, now);
+    return { at: at.toISOString(), hour, weekday: local(at, offsetMin).weekday, score: 0 };
+  });
   return {
     source: "baseline",
     samples: rows.length,
