@@ -80,7 +80,8 @@ const LIMIT: Record<string, number> = {
 };
 
 /** يعيد نص المنشور مكيّفاً لحدود المنصة المطلوبة. */
-export function adaptForProvider(provider: string, caption: string): string {
+export function adaptForProvider(provider: string, rawCaption: string): string {
+  const caption = sanitizePostBody(rawCaption) || rawCaption;
   if (provider === "x") return shortForX(caption);
   const limit = LIMIT[provider];
   return limit && caption.length > limit ? `${caption.slice(0, limit - 1).trim()}…` : caption;
