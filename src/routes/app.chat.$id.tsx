@@ -682,7 +682,15 @@ function ChatPage() {
               </div>
             ) : null}
 
-            {busy ? <Thinking memberId={member.id} name={member.name} /> : null}
+            {busy ? (
+              <Thinking
+                memberId={member.id}
+                name={member.name}
+                request={pending ?? pendingText ?? ""}
+                imageRequested={imageMode !== "off" && (imageMode !== "auto" || Boolean(imagePrompt.trim()))}
+                attachments={attachments.length}
+              />
+            ) : null}
 
             {savedTask && !busy ? (
               <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-jade/25 bg-jade/10 px-4 py-3 text-sm font-semibold text-jade-deep animate-pop-in">
