@@ -35,7 +35,17 @@ type TestResult = {
  * لوحة ميتا المباشرة: ربط الصفحات وحسابات إنستجرام بتطبيقنا الخاص،
  * معاينة شكل المنشور قبل إرساله، ونشر/اختبار حي يعرض معرّف المنشور أو سبب الفشل.
  */
-export function MetaDirect({ workspaceId }: { workspaceId: string | undefined }) {
+export function MetaDirect({
+  workspaceId,
+  only,
+  bare = false,
+}: {
+  workspaceId: string | undefined;
+  /** عرض منصة واحدة فقط (فيسبوك أو إنستجرام) داخل لوحة تفاصيل التطبيق. */
+  only?: "facebook" | "instagram";
+  /** بدون إطار القسم وعنوانه — للاستخدام داخل لوحة جانبية. */
+  bare?: boolean;
+}) {
   const status = useServerFn(metaStatus);
   const connect = useServerFn(startMetaConnect);
   const disconnect = useServerFn(disconnectMeta);
