@@ -5,6 +5,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/integrations/supabase/types";
+import { sanitizePostBody } from "./post-format";
 
 type Admin = SupabaseClient<Database>;
 
@@ -58,7 +59,7 @@ export async function publishQueuedPost(admin: Admin, id: string): Promise<Queue
     const published = await publishToPlatform(admin, {
       workspaceId: post.workspace_id,
       provider: post.provider,
-      text: post.body,
+      text: sanitizePostBody(post.body) || post.body,
       ...(post.image_url ? { imageUrl: post.image_url } : {}),
       ...(videoUrl ? { videoUrl } : {}),
     });

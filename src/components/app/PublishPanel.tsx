@@ -18,7 +18,7 @@ import { ConnectNow } from "@/components/app/ConnectNow";
 
 import { AppIcon, appLabel } from "@/components/site/AppIcon";
 import { useConnectedAccounts } from "@/lib/data";
-import { adaptForProvider, bestTimeFor } from "@/lib/post-format";
+import { adaptForProvider, bestTimeFor, sanitizePostBody } from "@/lib/post-format";
 import { PUBLISHABLE, requestedPublishTargets, providerLabel } from "@/lib/platforms";
 import { publishSocialNow, scheduleSocialPost, uploadSocialMedia } from "@/lib/social-queue.functions";
 
@@ -31,14 +31,9 @@ export function imageFromOutput(text: string | null | undefined): string | null 
   return raw?.[1] ?? null;
 }
 
-/** يزيل صيغ الماركداون من نص المنشور قبل إرساله للمنصة. */
+/** يزيل الماركداون وكل كلام الشات الموجّه للمستخدم قبل الإرسال للمنصة. */
 function cleanBody(text: string): string {
-  return text
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
-    .replace(/^#{1,6}\s*/gm, "")
-    .replace(/\*\*/g, "")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  return sanitizePostBody(text);
 }
 
 function localInputValue(date: Date): string {
